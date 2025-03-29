@@ -9,6 +9,7 @@ import { getActiveContests, getUserSubmissionCount } from '@/services/contestSer
 import { Upload, Image, Camera, AlertTriangle, Lock, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { photos } from '@/services/mockData'; // Import photos from mockData
 
 const PhotoSubmission = () => {
   const { user } = useAuth();
