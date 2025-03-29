@@ -178,11 +178,12 @@ const ContestsPage = () => {
       </div>
       
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
+        <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="active">Open Challenges</TabsTrigger>
           <TabsTrigger value="voting">Vote</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="completed">Past</TabsTrigger>
+          <TabsTrigger value="winners">Winners</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
         </TabsList>
         
         <TabsContent value="active" className="space-y-4">
@@ -203,7 +204,13 @@ const ContestsPage = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="completed" className="space-y-4">
+        <TabsContent value="winners" className="space-y-4">
+          <div className="grid gap-4">
+            {renderContestCards(completedContests?.filter(c => c.endDate > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)), isLoadingCompleted)}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="past" className="space-y-4">
           <div className="grid gap-4">
             {renderContestCards(completedContests, isLoadingCompleted)}
           </div>

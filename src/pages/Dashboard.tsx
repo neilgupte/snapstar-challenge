@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUpcomingContests, getCompletedContests, getUserSubmissionCount } from '@/services/contestService';
-import { Clock, Calendar, Camera, Award, Users, Filter, CheckCircle2, Eye, Trophy } from 'lucide-react';
+import { Clock, Calendar, Camera, Award, Users, CheckCircle2, Eye, Trophy } from 'lucide-react';
 import { photos } from '@/services/mockData';
 import CountdownTimer from '@/components/CountdownTimer';
 import { formatDate, getTimeRemaining, getStatusColor } from '@/utils/formatUtils';
@@ -79,9 +78,10 @@ const Dashboard = () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
+    // Return at most 6 winners
     return completedContests.filter(contest => 
       contest.endDate > sevenDaysAgo
-    );
+    ).slice(0, 6);
   };
   
   const recentWinners = getRecentWinners();
@@ -97,7 +97,7 @@ const Dashboard = () => {
     return photos.filter(photo => photo.contestId === contestId).length;
   };
 
-  // Placeholder function to get a winner's name
+  // Function to get a winner's name
   const getWinnerName = (contestId: string) => {
     // In a real app, this would fetch the actual winner
     return "Jane Doe";
@@ -108,9 +108,6 @@ const Dashboard = () => {
       <div className="flex flex-col gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Welcome to SnapStar</h1>
-          <p className="text-muted-foreground">
-            Join photography contests and showcase your talent
-          </p>
         </div>
         
         {user && (
@@ -213,7 +210,7 @@ const Dashboard = () => {
                           <span>{contest.category.name}</span>
                           <span className="text-sm text-muted-foreground flex items-center">
                             <Trophy size={14} className="mr-1" />
-                            Winner: {winnerName}
+                            {winnerName}
                           </span>
                         </CardDescription>
                       </CardHeader>

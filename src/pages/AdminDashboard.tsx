@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,10 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [premiumEmail, setPremiumEmail] = useState('');
+  const [selectedDuration, setSelectedDuration] = useState('7');
+  const [votingDuration, setVotingDuration] = useState('3');
   
   React.useEffect(() => {
     if (!user || !user.isAdmin) {
@@ -45,6 +49,15 @@ const AdminDashboard = () => {
     newToday: 5,
   };
   
+  const handleGrantPremium = () => {
+    if (premiumEmail.trim()) {
+      // This would actually call an API in a real application
+      console.log(`Granting premium to: ${premiumEmail}`);
+      alert(`Premium access granted to ${premiumEmail}`);
+      setPremiumEmail('');
+    }
+  };
+  
   return (
     <div className="container max-w-6xl py-6">
       <div className="mb-6 flex items-center justify-between">
@@ -55,9 +68,116 @@ const AdminDashboard = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild>
-            <a href="/admin/contests/new">Create New Contest</a>
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Create New Contest</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create New Contest</DialogTitle>
+                <DialogDescription>
+                  Set up a new photography contest with customized parameters
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title
+                  </Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter contest title"
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">
+                    Category
+                  </Label>
+                  <Select>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="nature">Nature</SelectItem>
+                        <SelectItem value="portrait">Portrait</SelectItem>
+                        <SelectItem value="street">Street</SelectItem>
+                        <SelectItem value="architecture">Architecture</SelectItem>
+                        <SelectItem value="wildlife">Wildlife</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">
+                    Description
+                  </Label>
+                  <Input
+                    id="description"
+                    placeholder="Enter contest description"
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="duration" className="text-right">
+                    Submission Duration
+                  </Label>
+                  <Select 
+                    defaultValue={selectedDuration}
+                    onValueChange={setSelectedDuration}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="3">3 days</SelectItem>
+                        <SelectItem value="7">1 week</SelectItem>
+                        <SelectItem value="14">2 weeks</SelectItem>
+                        <SelectItem value="30">1 month</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="votingPeriod" className="text-right">
+                    Voting Period
+                  </Label>
+                  <Select 
+                    defaultValue={votingDuration}
+                    onValueChange={setVotingDuration}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select voting period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="1">1 day</SelectItem>
+                        <SelectItem value="3">3 days</SelectItem>
+                        <SelectItem value="7">1 week</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="coverImage" className="text-right">
+                    Cover Image
+                  </Label>
+                  <Input
+                    id="coverImage"
+                    type="file"
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline">Cancel</Button>
+                <Button>Create Contest</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">Premium Settings</Button>
@@ -81,8 +201,13 @@ const AdminDashboard = () => {
                 <div className="grid gap-2">
                   <Label htmlFor="grantAccess">Grant Premium Access</Label>
                   <div className="flex items-center gap-2">
-                    <Input id="userEmail" placeholder="Enter user email" />
-                    <Button>Grant</Button>
+                    <Input 
+                      id="userEmail" 
+                      placeholder="Enter user email" 
+                      value={premiumEmail}
+                      onChange={(e) => setPremiumEmail(e.target.value)}
+                    />
+                    <Button onClick={handleGrantPremium}>Grant</Button>
                   </div>
                 </div>
               </div>

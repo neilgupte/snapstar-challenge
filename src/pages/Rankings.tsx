@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Award, Medal } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-// Mock data for demonstration
-const mockRankings = [
+// Mock data for demonstration - export to be able to use in UserProfile.tsx
+export const mockRankings = [
   {
     id: '1',
     username: 'PhotoMaster',
@@ -133,7 +134,7 @@ const Rankings = () => {
         {mockRankings.map((photographer, index) => (
           <Card key={photographer.id} className={`hover:bg-accent/10 transition-colors ${user && photographer.username === 'RegularUser' ? 'border-snapstar-purple bg-accent/5' : ''}`}>
             <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+              <Link to={`/users/${photographer.id}`} className="flex items-center gap-4">
                 <RankingBadge position={index + 1} />
                 
                 <Avatar className="size-10">
@@ -153,7 +154,7 @@ const Rankings = () => {
                   <p className="font-bold">{photographer.points} pts</p>
                   <Badge variant="outline" className="mt-1 text-xs">{photographer.highlightedAchievement}</Badge>
                 </div>
-              </div>
+              </Link>
             </CardContent>
           </Card>
         ))}
