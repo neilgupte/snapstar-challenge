@@ -114,7 +114,9 @@ const Rankings = () => {
                 <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <p className="font-medium">{user.username}</p>
+                <Link to="/profile" className="font-medium hover:text-snapstar-purple">
+                  {user.username}
+                </Link>
                 <p className="text-sm text-muted-foreground">
                   {mockRankings.findIndex(r => r.username === 'RegularUser') + 1} of {mockRankings.length} photographers
                 </p>
@@ -134,7 +136,7 @@ const Rankings = () => {
         {mockRankings.map((photographer, index) => (
           <Card key={photographer.id} className={`hover:bg-accent/10 transition-colors ${user && photographer.username === 'RegularUser' ? 'border-snapstar-purple bg-accent/5' : ''}`}>
             <CardContent className="p-4">
-              <Link to={`/users/${photographer.id}`} className="flex items-center gap-4">
+              <Link to={`/profile/${photographer.id}`} className="flex items-center gap-4">
                 <RankingBadge position={index + 1} />
                 
                 <Avatar className="size-10">
@@ -143,7 +145,7 @@ const Rankings = () => {
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{photographer.username}</p>
+                  <p className="font-medium truncate hover:text-snapstar-purple">{photographer.username}</p>
                   <div className="flex items-center text-xs text-muted-foreground">
                     <Trophy size={12} className="mr-1" />
                     <span>{photographer.wins} {photographer.wins === 1 ? 'win' : 'wins'}</span>

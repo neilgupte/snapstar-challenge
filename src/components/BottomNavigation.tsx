@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Camera, Trophy, User, Bell, Book } from 'lucide-react';
+import { Home, Award, Trophy, User, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,7 +11,7 @@ const BottomNavigation = () => {
   
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/submit', icon: Camera, label: 'Submit' },
+    { path: '/rankings', icon: Award, label: 'Rankings' },
     { path: '/contests', icon: Trophy, label: 'Contests' },
     { path: user ? '/profile' : '/signin', icon: User, label: user ? 'Profile' : 'Account' },
     { path: '/notifications', icon: Bell, label: 'Alerts' },

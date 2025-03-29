@@ -78,10 +78,22 @@ const Dashboard = () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Return exactly 6 winners
-    return completedContests.filter(contest => 
-      contest.endDate > sevenDaysAgo
-    ).slice(0, 6);
+    // Get recent contests and ensure we have exactly 6
+    const recentContests = completedContests
+      .filter(contest => new Date(contest.endDate) > sevenDaysAgo)
+      .slice(0, 6);
+    
+    // If we have less than 6, add older contests to fill
+    if (recentContests.length < 6 && completedContests.length > 0) {
+      const remainingNeeded = 6 - recentContests.length;
+      const olderContests = completedContests
+        .filter(contest => new Date(contest.endDate) <= sevenDaysAgo)
+        .slice(0, remainingNeeded);
+      
+      return [...recentContests, ...olderContests];
+    }
+    
+    return recentContests;
   };
   
   const recentWinners = getRecentWinners();
