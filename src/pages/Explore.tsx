@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -15,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getPhotosByContestId, voteOnPhoto } from '@/services/contestService';
 import { photos } from '@/services/mockData';
 import { Photo } from '@/types';
+import { formatDate } from '@/utils/formatUtils';
 
 const Explore = () => {
   const { user } = useAuth();
@@ -24,11 +24,9 @@ const Explore = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   
-  // We'll just use all mock photos for the explore page
   const { data: allPhotos, isLoading } = useQuery({
     queryKey: ['explorePhotos'],
     queryFn: async () => {
-      // Simulating API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       return photos.filter(photo => photo.moderationStatus === 'approved');
     },
@@ -45,11 +43,9 @@ const Explore = () => {
     onSuccess: (_, variables) => {
       toast.success('Vote submitted!');
       
-      // Reset UI state
       setSelectedPhoto(null);
       setSelectedRating(0);
       
-      // Refetch data
       queryClient.invalidateQueries({ queryKey: ['explorePhotos'] });
     },
     onError: (error: Error) => {
@@ -65,13 +61,6 @@ const Explore = () => {
     }
     
     voteMutation.mutate({ photoId, rating });
-  };
-  
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
   };
   
   const filteredPhotos = allPhotos?.filter(photo => {

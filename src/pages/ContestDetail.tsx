@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +12,8 @@ import { Calendar, Clock, Upload, Star, AlertTriangle, Flag, User, Trophy } from
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/contexts/AuthContext';
 import { getContestById, getPhotosByContestId, submitPhoto, hasUserSubmittedToContest, getUserVote, voteOnPhoto } from '@/services/contestService';
+import { Label } from '@/components/ui/label';
+import { Camera, Check } from 'lucide-react';
 
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
