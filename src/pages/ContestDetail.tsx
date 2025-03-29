@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -834,7 +834,8 @@ const ContestDetail = () => {
                     </CardFooter>
                   </Card>
                 </CarouselItem>
-              )})}
+                );
+              })}
             </CarouselContent>
             {!isMobile && (
               <>
@@ -920,4 +921,4 @@ const ContestDetail = () => {
           <DialogHeader>
             <DialogTitle>Sign in required</DialogTitle>
             <DialogDescription>
-              You need to sign in to vote on photos. It only takes a
+              You need to sign in to vote on photos. It only takes
