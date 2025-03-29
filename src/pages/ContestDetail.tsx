@@ -297,135 +297,27 @@ const ContestDetail = () => {
           </div>
           
           {canSubmit && (
-            <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="bg-white text-black border-gray-300 hover:bg-gray-100">
-                  <Camera size={16} className="mr-2" />
-                  Submit Photo
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Submit your photo</DialogTitle>
-                  <DialogDescription>
-                    Upload your best shot for the "{contest.title}" contest
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                  {photoPreview ? (
-                    <div className="relative overflow-hidden rounded-lg">
-                      <AspectRatio ratio={16 / 9}>
-                        <img
-                          src={photoPreview}
-                          alt="Preview"
-                          className="h-full w-full object-cover"
-                        />
-                      </AspectRatio>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute right-2 top-2"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          setPhotoPreview(null);
-                        }}
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
-                      <Upload className="h-8 w-8 text-muted-foreground" />
-                      <div className="space-y-1 text-center">
-                        <p className="text-sm font-medium">
-                          Drag and drop or click to upload
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          JPEG or PNG, max 10MB
-                        </p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        className="hidden"
-                        id="photo-upload"
-                        onChange={handleFileChange}
-                      />
-                      <Button asChild variant="secondary" size="sm">
-                        <label htmlFor="photo-upload">Select File</label>
-                      </Button>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="caption">Caption (optional)</Label>
-                    <Textarea
-                      id="caption"
-                      placeholder="Add a description for your photo..."
-                      value={caption}
-                      onChange={(e) => setCaption(e.target.value)}
-                      maxLength={200}
-                    />
-                    <div className="text-right text-xs text-muted-foreground">
-                      {caption.length}/200
-                    </div>
-                  </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setSubmitDialogOpen(false)}
-                  >
-                    Cancel
+            <div className="flex flex-col items-end gap-2">
+              <Badge className="bg-snapstar-green text-white">
+                Open for Entries
+              </Badge>
+              <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="bg-white text-black border-black hover:bg-gray-100">
+                    <Camera size={16} className="mr-2" />
+                    Submit Photo
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white text-black border-gray-300 hover:bg-gray-100"
-                    onClick={handleSubmit}
-                    disabled={!photoPreview || submitPhotoMutation.isPending}
-                  >
-                    {submitPhotoMutation.isPending ? 'Submitting...' : 'Submit Entry'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-          
-          {isActive && user && hasSubmitted && userSubmission && (
-            <Dialog open={editSubmissionDialogOpen} onOpenChange={setEditSubmissionDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="bg-white text-black border-gray-300 hover:bg-gray-100">
-                  <Edit size={16} className="mr-2" />
-                  Change Photo
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Update your submission</DialogTitle>
-                  <DialogDescription>
-                    Replace your current photo for the "{contest.title}" contest
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Current submission:</h3>
-                    <div className="relative overflow-hidden rounded-lg">
-                      <AspectRatio ratio={16 / 9}>
-                        <img
-                          src={userSubmission.imageUrl}
-                          alt="Current submission"
-                          className="h-full w-full object-cover"
-                        />
-                      </AspectRatio>
-                    </div>
-                  </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Submit your photo</DialogTitle>
+                    <DialogDescription>
+                      Upload your best shot for the "{contest.title}" contest
+                    </DialogDescription>
+                  </DialogHeader>
                   
-                  {photoPreview ? (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">New photo:</h3>
+                  <div className="space-y-4 py-4">
+                    {photoPreview ? (
                       <div className="relative overflow-hidden rounded-lg">
                         <AspectRatio ratio={16 / 9}>
                           <img
@@ -446,69 +338,187 @@ const ContestDetail = () => {
                           ✕
                         </Button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
-                      <Upload className="h-8 w-8 text-muted-foreground" />
-                      <div className="space-y-1 text-center">
-                        <p className="text-sm font-medium">
-                          Upload a new photo
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          JPEG or PNG, max 10MB
-                        </p>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <div className="space-y-1 text-center">
+                          <p className="text-sm font-medium">
+                            Drag and drop or click to upload
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            JPEG or PNG, max 10MB
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          className="hidden"
+                          id="photo-upload"
+                          onChange={handleFileChange}
+                        />
+                        <Button asChild variant="secondary" size="sm">
+                          <label htmlFor="photo-upload">Select File</label>
+                        </Button>
                       </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        className="hidden"
-                        id="photo-upload-edit"
-                        onChange={handleFileChange}
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="caption">Caption (optional)</Label>
+                      <Textarea
+                        id="caption"
+                        placeholder="Add a description for your photo..."
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        maxLength={200}
                       />
-                      <Button asChild variant="secondary" size="sm">
-                        <label htmlFor="photo-upload-edit">Select File</label>
-                      </Button>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="caption">Caption (optional)</Label>
-                    <Textarea
-                      id="caption"
-                      placeholder="Add a description for your photo..."
-                      value={caption || userSubmission.caption || ''}
-                      onChange={(e) => setCaption(e.target.value)}
-                      maxLength={200}
-                    />
-                    <div className="text-right text-xs text-muted-foreground">
-                      {(caption || userSubmission.caption || '').length}/200
+                      <div className="text-right text-xs text-muted-foreground">
+                        {caption.length}/200
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setEditSubmissionDialogOpen(false);
-                      setPhotoFile(null);
-                      setPhotoPreview(null);
-                      setCaption('');
-                    }}
-                  >
-                    Cancel
+                  
+                  <DialogFooter>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setSubmitDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-white text-black border-black hover:bg-gray-100"
+                      onClick={handleSubmit}
+                      disabled={!photoPreview || submitPhotoMutation.isPending}
+                    >
+                      {submitPhotoMutation.isPending ? 'Submitting...' : 'Submit Entry'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+          
+          {isActive && user && hasSubmitted && userSubmission && (
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="outline" className="border-snapstar-green text-snapstar-green">
+                You've Submitted
+              </Badge>
+              <Dialog open={editSubmissionDialogOpen} onOpenChange={setEditSubmissionDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="bg-white text-black border-black hover:bg-gray-100">
+                    <Camera size={16} className="mr-2" />
+                    Change Photo
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white text-black border-gray-300 hover:bg-gray-100"
-                    onClick={handleSubmit}
-                    disabled={!photoPreview || submitPhotoMutation.isPending}
-                  >
-                    {submitPhotoMutation.isPending ? 'Updating...' : 'Update Entry'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Update your submission</DialogTitle>
+                    <DialogDescription>
+                      Replace your current photo for the "{contest.title}" contest
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Current submission:</h3>
+                      <div className="relative overflow-hidden rounded-lg">
+                        <AspectRatio ratio={16 / 9}>
+                          <img
+                            src={userSubmission.imageUrl}
+                            alt="Current submission"
+                            className="h-full w-full object-cover"
+                          />
+                        </AspectRatio>
+                      </div>
+                    </div>
+                    
+                    {photoPreview ? (
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-medium">New photo:</h3>
+                        <div className="relative overflow-hidden rounded-lg">
+                          <AspectRatio ratio={16 / 9}>
+                            <img
+                              src={photoPreview}
+                              alt="Preview"
+                              className="h-full w-full object-cover"
+                            />
+                          </AspectRatio>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute right-2 top-2"
+                            onClick={() => {
+                              setPhotoFile(null);
+                              setPhotoPreview(null);
+                            }}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <div className="space-y-1 text-center">
+                          <p className="text-sm font-medium">
+                            Upload a new photo
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            JPEG or PNG, max 10MB
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          className="hidden"
+                          id="photo-upload-edit"
+                          onChange={handleFileChange}
+                        />
+                        <Button asChild variant="secondary" size="sm">
+                          <label htmlFor="photo-upload-edit">Select File</label>
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="caption">Caption (optional)</Label>
+                      <Textarea
+                        id="caption"
+                        placeholder="Add a description for your photo..."
+                        value={caption || userSubmission.caption || ''}
+                        onChange={(e) => setCaption(e.target.value)}
+                        maxLength={200}
+                      />
+                      <div className="text-right text-xs text-muted-foreground">
+                        {(caption || userSubmission.caption || '').length}/200
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setEditSubmissionDialogOpen(false);
+                        setPhotoFile(null);
+                        setPhotoPreview(null);
+                        setCaption('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-white text-black border-black hover:bg-gray-100"
+                      onClick={handleSubmit}
+                      disabled={!photoPreview || submitPhotoMutation.isPending}
+                    >
+                      {submitPhotoMutation.isPending ? 'Updating...' : 'Update Entry'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           )}
         </div>
         
@@ -581,7 +591,9 @@ const ContestDetail = () => {
                         )}
                         
                         {photo.userId === user?.id && (
-                          <Badge variant="outline">Your Entry</Badge>
+                          <Badge variant="outline" className="border-snapstar-purple text-snapstar-purple">
+                            Your Entry
+                          </Badge>
                         )}
                       </div>
                     </CardHeader>
@@ -657,7 +669,7 @@ const ContestDetail = () => {
                                     <Button 
                                       size="sm" 
                                       variant="outline"
-                                      className="ml-2 bg-white text-black border-gray-300 hover:bg-gray-100"
+                                      className="ml-2 bg-white text-black border-black hover:bg-gray-100"
                                       onClick={() => {
                                         if (selectedPhoto === photo.id && selectedRating > 0) {
                                           handleVote(photo.id, selectedRating);
@@ -665,7 +677,7 @@ const ContestDetail = () => {
                                       }}
                                       disabled={selectedPhoto !== photo.id || selectedRating === 0 || voteMutation.isPending}
                                     >
-                                      <Star size={14} className="mr-1" />
+                                      <Vote size={14} className="mr-1" />
                                       Vote
                                     </Button>
                                   </>
@@ -680,15 +692,17 @@ const ContestDetail = () => {
                           ) : (
                             <div>
                               {photo.userId === user?.id ? (
-                                <Badge variant="outline">Your Entry</Badge>
+                                <Badge variant="outline" className="border-snapstar-purple text-snapstar-purple">
+                                  Your Entry
+                                </Badge>
                               ) : (
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  className="bg-white text-black border-gray-300 hover:bg-gray-100"
+                                  className="bg-white text-black border-black hover:bg-gray-100"
                                   onClick={() => setSignInDialogOpen(true)}
                                 >
-                                  <Star size={14} className="mr-1" />
+                                  <Vote size={14} className="mr-1" />
                                   Sign in to vote
                                 </Button>
                               )}
@@ -697,7 +711,9 @@ const ContestDetail = () => {
                         ) : (
                           <div>
                             {photo.userId === user?.id ? (
-                              <Badge variant="outline">Your Entry</Badge>
+                              <Badge variant="outline" className="border-snapstar-purple text-snapstar-purple">
+                                Your Entry
+                              </Badge>
                             ) : (
                               <span className="text-xs text-muted-foreground">
                                 {isActive
@@ -723,6 +739,10 @@ const ContestDetail = () => {
                           photoId={photo.id} 
                           comments={photoComments[photo.id] || []}
                           onAddComment={addComment}
+                          onFlagComment={(commentId) => {
+                            console.log(`Comment ${commentId} flagged for review`);
+                            toast.success("Comment has been flagged for review");
+                          }}
                         />
                       </div>
                     </CardFooter>
@@ -753,7 +773,7 @@ const ContestDetail = () => {
           </p>
           {canSubmit && (
             <Button
-              className="mt-6 bg-white text-black border border-gray-300 hover:bg-gray-100"
+              className="mt-6 bg-white text-black border border-black hover:bg-gray-100"
               onClick={() => setSubmitDialogOpen(true)}
             >
               <Camera size={16} className="mr-2" />

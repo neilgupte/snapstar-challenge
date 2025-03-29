@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, MessageSquare } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { MessageSquare } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
-import { formatDate } from '@/utils/formatUtils';
+import Comment from './Comment';
+import { containsProfanity } from '@/utils/profanityFilter';
+import { toast } from 'sonner';
 
 interface Comment {
   id: string;
@@ -15,18 +16,21 @@ interface Comment {
   text: string;
   createdAt: Date;
   avatarUrl?: string;
+  flagCount?: number;
 }
 
 interface CommentSectionProps {
   photoId: string;
   comments: Comment[];
   onAddComment: (photoId: string, text: string) => void;
+  onFlagComment?: (commentId: string) => void;
 }
 
 const CommentSection: React.FC<CommentSectionProps> = ({ 
   photoId, 
   comments, 
-  onAddComment 
+  onAddComment,
+  onFlagComment = () => {} 
 }) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState('');
@@ -35,9 +39,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
+      // Check for profanity before submitting
+      if (containsProfanity(newComment)) {
+        toast.error("Your comment contains inappropriate language. Please revise and try again.");
+        return;
+      }
+      
       onAddComment(photoId, newComment);
       setNewComment('');
     }
+  };
+
+  const handleFlagComment = (commentId: string) => {
+    onFlagComment(commentId);
   };
 
   if (comments.length === 0 && !isExpanded && !user) {
@@ -86,30 +100,17 @@ const CommentSection: React.FC<CommentSectionProps> = ({
           {comments.length > 0 && (
             <div className="space-y-3">
               {comments.map((comment) => (
-                <Card key={comment.id} className="bg-muted/50">
-                  <CardContent className="p-3">
-                    <div className="flex gap-3">
-                      <Avatar className="h-8 w-8">
-                        {comment.avatarUrl ? (
-                          <AvatarImage src={comment.avatarUrl} />
-                        ) : (
-                          <AvatarFallback>
-                            <User size={16} />
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{comment.username}</p>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(comment.createdAt)}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-sm">{comment.text}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Comment
+                  key={comment.id}
+                  id={comment.id}
+                  userId={comment.userId}
+                  username={comment.username}
+                  text={comment.text}
+                  createdAt={comment.createdAt}
+                  avatarUrl={comment.avatarUrl}
+                  flagCount={comment.flagCount || 0}
+                  onFlagComment={handleFlagComment}
+                />
               ))}
             </div>
           )}

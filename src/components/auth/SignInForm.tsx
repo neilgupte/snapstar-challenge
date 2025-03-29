@@ -11,10 +11,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  staySignedIn: z.boolean().optional(),
 });
 
 type SignInFormValues = z.infer<typeof signInSchema>;
@@ -34,6 +36,7 @@ const SignInForm = () => {
     defaultValues: {
       email: '',
       password: '',
+      staySignedIn: true,
     },
   });
 
@@ -43,11 +46,22 @@ const SignInForm = () => {
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
+      }, {
+        data: {
+          staySignedIn: data.staySignedIn
+        }
       });
       
       if (error) {
         toast.error(error.message);
         return;
+      }
+      
+      // Store the staySignedIn preference in localStorage if checked
+      if (data.staySignedIn) {
+        localStorage.setItem('staySignedIn', 'true');
+      } else {
+        localStorage.removeItem('staySignedIn');
       }
       
       toast.success('Signed in successfully');
@@ -136,6 +150,14 @@ const SignInForm = () => {
           {errors.password && (
             <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="staySignedIn" 
+            {...register('staySignedIn')} 
+          />
+          <Label htmlFor="staySignedIn" className="text-sm font-normal">Stay signed in</Label>
         </div>
         
         <Button type="submit" className="w-full" disabled={isLoading || formLoading}>
