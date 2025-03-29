@@ -18,6 +18,10 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Upgrade from "@/pages/Upgrade";
 import NotFound from "./pages/NotFound";
+import Contests from "./pages/Contests";
+import Search from "./pages/Search";
+import Rankings from "./pages/Rankings";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,7 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/submit" element={<PhotoSubmission />} />
+              <Route path="/contests" element={<Contests />} />
               <Route path="/contests/:id" element={<ContestDetail />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/signin" element={<SignIn />} />
@@ -41,6 +46,9 @@ const App = () => (
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/upgrade" element={<Upgrade />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/rankings" element={<Rankings />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

@@ -1,18 +1,21 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Camera, Trophy, User, Search } from 'lucide-react';
+import { Home, Search, Camera, Trophy, User, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 const BottomNavigation = () => {
   const location = useLocation();
+  const { user } = useAuth();
   
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/explore', icon: Search, label: 'Explore' },
+    { path: '/search', icon: Search, label: 'Search' },
     { path: '/submit', icon: Camera, label: 'Submit' },
     { path: '/contests', icon: Trophy, label: 'Contests' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    { path: user ? '/profile' : '/signin', icon: User, label: user ? 'Profile' : 'Account' },
+    { path: '/notifications', icon: Bell, label: 'Alerts' },
   ];
 
   return (
