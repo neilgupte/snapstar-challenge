@@ -46,9 +46,10 @@ const SignInForm = () => {
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
-      }, {
-        data: {
-          staySignedIn: data.staySignedIn
+        options: {
+          data: {
+            staySignedIn: data.staySignedIn
+          }
         }
       });
       
