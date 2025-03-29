@@ -11,17 +11,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from 'sonner';
 
 const MAX_BIRTHDATE = new Date();
 MAX_BIRTHDATE.setFullYear(MAX_BIRTHDATE.getFullYear() - 12);
 
 const signUpSchema = z.object({
-  username: z.string().min(3, { message: 'Username must be at least 3 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
   dateOfBirth: z.date().max(MAX_BIRTHDATE, { message: 'You must be at least 12 years old to register' }),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the Terms and Conditions' }),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: 'You must accept the Terms and Conditions',
   }),
 });
 
@@ -29,42 +30,75 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 const SignUpForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { signUp, isLoading, isValidAge } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      username: '',
       email: '',
       password: '',
       dateOfBirth: undefined,
-      acceptTerms: undefined, // Remove the default false value to fix the type error
+      acceptTerms: false,
     },
   });
 
+  // Watch the acceptTerms value to debug
+  const acceptTermsValue = watch('acceptTerms');
+
   const onSubmit = async (data: SignUpFormValues) => {
     try {
-      if (!isValidAge(data.dateOfBirth)) {
-        return; // This should be caught by zod validation
+      setIsLoading(true);
+      
+      // Check age verification
+      const today = new Date();
+      const birthDate = new Date(data.dateOfBirth);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
       }
       
-      await signUp(
-        data.email,
-        data.password,
-        data.username,
-        data.dateOfBirth,
-        data.acceptTerms
-      );
-      
-      navigate('/');
-    } catch (error) {
-      // Error is already handled by the auth context
+      if (age < 12) {
+        toast.error('You must be at least 12 years old to register');
+        return;
+      }
+
+      // Sign up with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            date_of_birth: data.dateOfBirth.toISOString().split('T')[0],
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        }
+      });
+
+      if (error) {
+        toast.error(error.message || 'Failed to create account');
+        return;
+      }
+
+      toast.success('Verification email sent! Please check your inbox.');
+      navigate('/signin');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create account');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setValue('acceptTerms', checked, { shouldValidate: true });
   };
 
   return (
@@ -75,18 +109,6 @@ const SignUpForm = () => {
       </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            placeholder="johnsmith"
-            {...register('username')}
-          />
-          {errors.username && (
-            <p className="text-sm text-destructive">{errors.username.message}</p>
-          )}
-        </div>
-        
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -155,7 +177,8 @@ const SignUpForm = () => {
           <div className="flex items-start space-x-2">
             <Checkbox
               id="acceptTerms"
-              {...register('acceptTerms')}
+              checked={acceptTermsValue}
+              onCheckedChange={handleCheckboxChange}
             />
             <div className="grid gap-1">
               <Label

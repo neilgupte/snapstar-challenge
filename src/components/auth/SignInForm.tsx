@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from 'sonner';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -19,7 +21,8 @@ type SignInFormValues = z.infer<typeof signInSchema>;
 
 const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, isLoading } = useAuth();
+  const { isLoading } = useAuth();
+  const [formLoading, setFormLoading] = useState(false);
   const navigate = useNavigate();
   
   const {
@@ -36,10 +39,47 @@ const SignInForm = () => {
 
   const onSubmit = async (data: SignInFormValues) => {
     try {
-      await signIn(data.email, data.password);
+      setFormLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      
+      toast.success('Signed in successfully');
       navigate('/');
+    } catch (error: any) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    const email = prompt("Please enter your email address to reset your password:");
+    
+    if (!email) return;
+    
+    try {
+      setFormLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      
+      toast.success('Password reset email sent. Please check your inbox.');
     } catch (error) {
-      // Error is already handled by the auth context
+      toast.error('Failed to send password reset email');
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -65,7 +105,17 @@ const SignInForm = () => {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <Button 
+              type="button" 
+              variant="link" 
+              className="px-0 h-auto text-xs"
+              onClick={handlePasswordReset}
+            >
+              Forgot password?
+            </Button>
+          </div>
           <div className="relative">
             <Input
               id="password"
@@ -88,8 +138,8 @@ const SignInForm = () => {
           )}
         </div>
         
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign In'}
+        <Button type="submit" className="w-full" disabled={isLoading || formLoading}>
+          {(isLoading || formLoading) ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
       
