@@ -1,14 +1,19 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, Camera, X, Award } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerClose } from '@/components/ui/drawer';
 
 const Upgrade = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [showBenefits, setShowBenefits] = useState(false);
   
   if (!user) {
     // Redirect to sign in if not logged in
@@ -45,15 +50,96 @@ const Upgrade = () => {
     );
   }
 
+  const BenefitsContent = () => (
+    <div className="space-y-4">
+      <div className="grid gap-6 sm:grid-cols-3">
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-snapstar-purple/10">
+            <Camera className="h-6 w-6 text-snapstar-purple" />
+          </div>
+          <h3 className="mt-4 font-medium">Unlimited Submissions</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter as many contests as you want without weekly limits
+          </p>
+        </div>
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-snapstar-purple/10">
+            <Award className="h-6 w-6 text-snapstar-purple" />
+          </div>
+          <h3 className="mt-4 font-medium">Premium Badge</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Stand out with a premium badge on your profile and submissions
+          </p>
+        </div>
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-snapstar-purple/10">
+            <div className="relative flex h-6 w-6 items-center justify-center">
+              <div className="absolute h-4 w-4 rounded-sm border-2 border-snapstar-purple"></div>
+              <X className="h-3 w-3 text-snapstar-purple" />
+            </div>
+          </div>
+          <h3 className="mt-4 font-medium">Ad-Free Experience</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enjoy the platform without any advertisements or distractions
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="container max-w-4xl py-6">
       <div className="space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Upgrade to Premium</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isMobile ? "Upgrade" : "Upgrade to Premium"}
+          </h1>
           <p className="text-muted-foreground">
             Get unlimited submissions and an ad-free experience
           </p>
+          <button 
+            onClick={() => setShowBenefits(true)}
+            className="text-snapstar-purple hover:underline text-sm mt-1"
+          >
+            View benefits
+          </button>
         </div>
+        
+        {/* Benefits Dialog/Drawer */}
+        {isMobile ? (
+          <Drawer open={showBenefits} onOpenChange={setShowBenefits}>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>Premium Benefits</DrawerTitle>
+                <DrawerDescription>
+                  Why you should upgrade to SnapStar Premium
+                </DrawerDescription>
+              </DrawerHeader>
+              <div className="p-4">
+                <BenefitsContent />
+              </div>
+              <div className="p-4">
+                <Button onClick={() => setShowBenefits(false)} className="w-full">
+                  Close
+                </Button>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <Dialog open={showBenefits} onOpenChange={setShowBenefits}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Premium Benefits</DialogTitle>
+                <DialogDescription>
+                  Why you should upgrade to SnapStar Premium
+                </DialogDescription>
+              </DialogHeader>
+              <BenefitsContent />
+            </DialogContent>
+          </Dialog>
+        )}
         
         <div className="grid gap-6 sm:grid-cols-2">
           <Card>
@@ -144,44 +230,6 @@ const Upgrade = () => {
               </Button>
             </CardFooter>
           </Card>
-        </div>
-        
-        <div className="rounded-lg border p-6">
-          <h2 className="text-xl font-semibold">Premium Benefits</h2>
-          <div className="mt-4 grid gap-6 sm:grid-cols-3">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-snapstar-purple/10">
-                <Camera className="h-6 w-6 text-snapstar-purple" />
-              </div>
-              <h3 className="mt-4 font-medium">Unlimited Submissions</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Enter as many contests as you want without weekly limits
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-snapstar-purple/10">
-                <Award className="h-6 w-6 text-snapstar-purple" />
-              </div>
-              <h3 className="mt-4 font-medium">Premium Badge</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Stand out with a premium badge on your profile and submissions
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-snapstar-purple/10">
-                <div className="relative flex h-6 w-6 items-center justify-center">
-                  <div className="absolute h-4 w-4 rounded-sm border-2 border-snapstar-purple"></div>
-                  <X className="h-3 w-3 text-snapstar-purple" />
-                </div>
-              </div>
-              <h3 className="mt-4 font-medium">Ad-Free Experience</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Enjoy the platform without any advertisements or distractions
-              </p>
-            </div>
-          </div>
         </div>
         
         <div className="text-center">

@@ -10,6 +10,8 @@ import { Upload, Image, Camera, AlertTriangle, Lock, X, Eye, Check } from 'lucid
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { photos } from '@/services/mockData'; // Import photos from mockData
+import SubmissionGuidelines from '@/components/SubmissionGuidelines';
+import CountdownTimer from '@/components/CountdownTimer';
 
 const PhotoSubmission = () => {
   const { user } = useAuth();
@@ -18,6 +20,7 @@ const PhotoSubmission = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [filterMyEntries, setFilterMyEntries] = useState<'all' | 'entered' | 'not-entered'>('all');
   
   const { data: activeContests, isLoading: isLoadingContests } = useQuery({
     queryKey: ['activeContests'],
@@ -107,6 +110,19 @@ const PhotoSubmission = () => {
       photo.userId === user?.id
     );
   };
+  
+  // Filter contests based on user's participation
+  const filterContests = (contests: any[] | undefined) => {
+    if (!contests || filterMyEntries === 'all') return contests;
+    
+    if (filterMyEntries === 'entered') {
+      return contests.filter(contest => hasSubmittedToContest(contest.id));
+    } else {
+      return contests.filter(contest => !hasSubmittedToContest(contest.id));
+    }
+  };
+  
+  const filteredContests = filterContests(activeContests);
 
   return (
     <div className="container max-w-4xl py-6">
@@ -116,6 +132,9 @@ const PhotoSubmission = () => {
           <p className="text-muted-foreground">
             Choose a contest to enter with your best shot
           </p>
+          <div className="mt-2">
+            <SubmissionGuidelines />
+          </div>
         </div>
         
         {/* Submission status */}
@@ -143,7 +162,7 @@ const PhotoSubmission = () => {
                 </div>
               ) : (
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/upgrade">Upgrade to Premium</Link>
+                  <Link to="/upgrade">Upgrade</Link>
                 </Button>
               )}
             </div>
@@ -238,7 +257,41 @@ const PhotoSubmission = () => {
           </Card>
         ) : activeContests && activeContests.length > 0 ? (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Choose a Contest</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="text-xl font-semibold">Choose a Contest</h2>
+              
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Filter size={14} />
+                  <span>Filter:</span>
+                </div>
+                <Button 
+                  variant={filterMyEntries === 'all' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setFilterMyEntries('all')}
+                  className="text-xs"
+                >
+                  All
+                </Button>
+                <Button 
+                  variant={filterMyEntries === 'entered' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setFilterMyEntries('entered')}
+                  className="text-xs"
+                >
+                  Entered
+                </Button>
+                <Button 
+                  variant={filterMyEntries === 'not-entered' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setFilterMyEntries('not-entered')}
+                  className="text-xs"
+                >
+                  Not Entered
+                </Button>
+              </div>
+            </div>
+            
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
               <Button 
                 onClick={() => setCameraOpen(true)} 
@@ -261,59 +314,83 @@ const PhotoSubmission = () => {
                 </label>
               </Button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {activeContests.map((contest) => {
-                const userHasSubmitted = hasSubmittedToContest(contest.id);
-                const submissionCount = photos.filter(p => p.contestId === contest.id).length;
-                
-                return (
-                  <Card key={contest.id} className="contest-card overflow-hidden">
-                    <div 
-                      className="h-40 bg-cover bg-center relative"
-                      style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
-                    >
-                      {userHasSubmitted && (
-                        <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
-                          <Check size={16} />
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{contest.title}</CardTitle>
-                      <CardDescription className="flex justify-between">
-                        <span>{contest.category.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {submissionCount} submission{submissionCount !== 1 ? 's' : ''}
-                        </span>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <p className="text-sm line-clamp-2">{contest.description}</p>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        asChild 
-                        className={`w-full ${userHasSubmitted ? 'bg-white text-black border border-gray-300 hover:bg-gray-100' : 'bg-white text-black border border-gray-300 hover:bg-gray-100'}`}
+            
+            {filteredContests && filteredContests.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {filteredContests.map((contest) => {
+                  const userHasSubmitted = hasSubmittedToContest(contest.id);
+                  const submissionCount = photos.filter(p => p.contestId === contest.id).length;
+                  const hasLessThanOneHourLeft = 
+                    contest.endDate.getTime() - new Date().getTime() < 60 * 60 * 1000 &&
+                    contest.endDate.getTime() - new Date().getTime() > 0;
+                  
+                  return (
+                    <Card key={contest.id} className="contest-card overflow-hidden">
+                      <div 
+                        className="h-40 bg-cover bg-center relative"
+                        style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
                       >
-                        <Link to={`/contests/${contest.id}`}>
-                          {userHasSubmitted ? (
-                            <>
-                              <Eye size={16} className="mr-2" />
-                              View Current Entries
-                            </>
-                          ) : (
-                            <>
-                              <Camera size={16} className="mr-2" />
-                              Submit Photo
-                            </>
-                          )}
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                );
-              })}
-            </div>
+                        {userHasSubmitted && (
+                          <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
+                            <Check size={16} />
+                          </div>
+                        )}
+                      </div>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{contest.title}</CardTitle>
+                        <CardDescription className="flex justify-between">
+                          <span>{contest.category.name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {submissionCount} submission{submissionCount !== 1 ? 's' : ''}
+                          </span>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <p className="text-sm line-clamp-2">{contest.description}</p>
+                        {hasLessThanOneHourLeft && (
+                          <div className="mt-2">
+                            <CountdownTimer endDate={contest.endDate} />
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="relative">
+                        {!userHasSubmitted && (
+                          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-snapstar-green text-white text-xs px-2 py-0.5 rounded">
+                            Open for entries
+                          </div>
+                        )}
+                        <Button 
+                          asChild 
+                          className={`w-full ${userHasSubmitted 
+                            ? 'bg-white text-black border border-gray-300 hover:bg-gray-100' 
+                            : 'bg-white text-black border border-black hover:bg-gray-100'}`}
+                        >
+                          <Link to={`/contests/${contest.id}`}>
+                            {userHasSubmitted ? (
+                              <>
+                                <Eye size={16} className="mr-2" />
+                                View Current Entries
+                              </>
+                            ) : (
+                              <>
+                                <Camera size={16} className="mr-2" />
+                                Submit Photo
+                              </>
+                            )}
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                {filterMyEntries !== 'all' 
+                  ? `No ${filterMyEntries === 'entered' ? 'entered' : 'unentered'} contests found.` 
+                  : 'No active contests available.'}
+              </div>
+            )}
           </div>
         ) : (
           <Card>
@@ -369,7 +446,7 @@ const PhotoSubmission = () => {
   );
 };
 
-// Missing Link component - adding here
+// Link component 
 interface LinkProps {
   to: string;
   children: React.ReactNode;
