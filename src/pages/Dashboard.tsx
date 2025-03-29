@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUpcomingContests, getCompletedContests, getUserSubmissionCount } from '@/services/contestService';
-import { Clock, Calendar, Camera, Award } from 'lucide-react';
+import { Clock, Calendar, Camera, Award, Users } from 'lucide-react';
+import { photos } from '@/services/mockData';
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -48,6 +49,10 @@ const getStatusColor = (status: string) => {
     default:
       return 'bg-muted text-muted-foreground';
   }
+};
+
+const getSubmissionCount = (contestId: string) => {
+  return photos.filter(photo => photo.contestId === contestId).length;
 };
 
 const Dashboard = () => {
@@ -162,7 +167,13 @@ const Dashboard = () => {
                           {contest.status === 'active' ? 'Open' : 'Voting'}
                         </Badge>
                       </div>
-                      <CardDescription>{contest.category.name}</CardDescription>
+                      <CardDescription className="flex justify-between">
+                        <span>{contest.category.name}</span>
+                        <span className="text-sm text-muted-foreground flex items-center">
+                          <Users size={14} className="mr-1" />
+                          {getSubmissionCount(contest.id)} entries
+                        </span>
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="pb-2">
                       <div className="space-y-2 text-sm">
@@ -264,7 +275,13 @@ const Dashboard = () => {
                         <CardTitle className="text-lg">{contest.title}</CardTitle>
                         <Badge className={getStatusColor(contest.status)}>Completed</Badge>
                       </div>
-                      <CardDescription>{contest.category.name}</CardDescription>
+                      <CardDescription className="flex justify-between">
+                        <span>{contest.category.name}</span>
+                        <span className="text-sm text-muted-foreground flex items-center">
+                          <Users size={14} className="mr-1" />
+                          {getSubmissionCount(contest.id)} entries
+                        </span>
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="pb-2">
                       <div className="space-y-2 text-sm">

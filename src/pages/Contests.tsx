@@ -11,7 +11,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Clock, Trophy } from 'lucide-react';
+import { CalendarClock, Clock, Trophy, Users } from 'lucide-react';
+import { photos } from '@/services/mockData';
 
 const ContestsPage = () => {
   const { 
@@ -37,6 +38,10 @@ const ContestsPage = () => {
     queryKey: ['contests', 'completed'],
     queryFn: getCompletedContests
   });
+
+  const getSubmissionCount = (contestId: string) => {
+    return photos.filter(photo => photo.contestId === contestId).length;
+  };
 
   const renderContestCards = (contests, isLoading) => {
     if (isLoading) {
@@ -87,23 +92,30 @@ const ContestsPage = () => {
               <div className="p-4 space-y-3">
                 <h3 className="font-bold text-lg line-clamp-1">{contest.title}</h3>
                 <p className="text-sm text-muted-foreground line-clamp-2">{contest.description}</p>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  {contest.status === 'upcoming' ? (
-                    <>
-                      <CalendarClock size={16} className="mr-1" />
-                      <span>Starts: {contest.startDate.toLocaleDateString()}</span>
-                    </>
-                  ) : contest.status === 'active' || contest.status === 'voting' ? (
-                    <>
-                      <Clock size={16} className="mr-1" />
-                      <span>Ends: {contest.endDate.toLocaleDateString()}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trophy size={16} className="mr-1" />
-                      <span>Completed: {contest.endDate.toLocaleDateString()}</span>
-                    </>
-                  )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    {contest.status === 'upcoming' ? (
+                      <>
+                        <CalendarClock size={16} className="mr-1" />
+                        <span>Starts: {contest.startDate.toLocaleDateString()}</span>
+                      </>
+                    ) : contest.status === 'active' || contest.status === 'voting' ? (
+                      <>
+                        <Clock size={16} className="mr-1" />
+                        <span>Ends: {contest.endDate.toLocaleDateString()}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trophy size={16} className="mr-1" />
+                        <span>Completed: {contest.endDate.toLocaleDateString()}</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Users size={16} className="mr-1" />
+                    <span>{getSubmissionCount(contest.id)} entries</span>
+                  </div>
                 </div>
               </div>
             </div>

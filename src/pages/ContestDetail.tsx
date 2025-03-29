@@ -18,6 +18,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useIsMobile } from '@/hooks/use-mobile';
 import CommentSection from '@/components/CommentSection';
 import { v4 as uuidv4 } from 'uuid';
+import { validatePhotoForContest } from '@/utils/photoValidation';
+import { photos } from '@/services/mockData';
 
 interface Comment {
   id: string;
@@ -132,7 +134,7 @@ const ContestDetail = () => {
     toast.success('Comment added');
   };
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -144,6 +146,15 @@ const ContestDetail = () => {
     if (file.size > 10 * 1024 * 1024) {
       toast.error('Image size should be less than 10MB');
       return;
+    }
+    
+    if (contest && contest.status === 'active') {
+      const validation = await validatePhotoForContest(file, contest.startDate, contest.endDate);
+      
+      if (!validation.isValid) {
+        toast.error(validation.message);
+        return;
+      }
     }
     
     setPhotoFile(file);

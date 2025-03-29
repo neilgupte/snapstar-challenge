@@ -1,352 +1,302 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search as SearchIcon, Calendar, Image, User, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Contest, Photo } from '@/types';
-import { contests, photos } from '@/services/mockData';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search as SearchIcon, Clock, Calendar, Trophy, Users } from 'lucide-react';
+import { getActiveContests, getUpcomingContests, getCompletedContests } from '@/services/contestService';
+import { photos } from '@/services/mockData';
+import { formatDate, getStatusColor } from '@/utils/formatUtils';
 
-type SearchResult = {
-  contests: Contest[];
-  photos: Photo[];
-  users: { id: string; username: string; avatarUrl?: string }[];
-};
+interface SearchResult {
+  id: string;
+  title: string;
+  description: string;
+  category: { id: string; name: string };
+  coverImageUrl: string;
+  status: 'draft' | 'upcoming' | 'active' | 'voting' | 'completed';
+  startDate: Date;
+  endDate: Date;
+  score: number; // Relevance score for sorting
+}
 
 const SearchPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<SearchResult | null>(null);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Mock search function
+  // Get the query parameter
+  const queryParams = new URLSearchParams(location.search);
+  const queryFromUrl = queryParams.get('q') || '';
+
+  const { data: activeContests, isLoading: isLoadingActive } = useQuery({
+    queryKey: ['contests', 'active'],
+    queryFn: getActiveContests
+  });
+
+  const { data: upcomingContests, isLoading: isLoadingUpcoming } = useQuery({
+    queryKey: ['contests', 'upcoming'],
+    queryFn: getUpcomingContests
+  });
+
+  const { data: completedContests, isLoading: isLoadingCompleted } = useQuery({
+    queryKey: ['contests', 'completed'],
+    queryFn: getCompletedContests
+  });
+
+  const isLoading = isLoadingActive || isLoadingUpcoming || isLoadingCompleted;
+
+  useEffect(() => {
+    if (queryFromUrl) {
+      setSearchQuery(queryFromUrl);
+      performSearch(queryFromUrl);
+    }
+  }, [queryFromUrl, activeContests, upcomingContests, completedContests]);
+
   const performSearch = (query: string) => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+
     setIsSearching(true);
-    
-    // Simulate API delay
-    setTimeout(() => {
-      if (!query.trim()) {
-        setResults(null);
-        setIsSearching(false);
-        return;
-      }
-      
-      const lowercaseQuery = query.toLowerCase();
-      
-      // Search contests
-      const matchedContests = contests.filter(contest => 
-        contest.title.toLowerCase().includes(lowercaseQuery) || 
-        contest.description.toLowerCase().includes(lowercaseQuery) ||
-        contest.category.name.toLowerCase().includes(lowercaseQuery)
-      );
-      
-      // Search photos (only approved ones)
-      const matchedPhotos = photos.filter(photo => 
-        photo.moderationStatus === 'approved' && (
-          (photo.caption && photo.caption.toLowerCase().includes(lowercaseQuery)) ||
-          photo.username.toLowerCase().includes(lowercaseQuery)
-        )
-      );
-      
-      // Extract unique users from photos
-      const userMap = new Map();
-      photos.forEach(photo => {
-        if (photo.username.toLowerCase().includes(lowercaseQuery)) {
-          userMap.set(photo.userId, {
-            id: photo.userId,
-            username: photo.username,
-            avatarUrl: '/placeholder.svg' // Using placeholder for mock data
-          });
-        }
-      });
-      
-      const matchedUsers = Array.from(userMap.values());
-      
-      setResults({
-        contests: matchedContests,
-        photos: matchedPhotos,
-        users: matchedUsers
-      });
-      
+
+    // Combine all contests
+    const allContests = [
+      ...(activeContests || []),
+      ...(upcomingContests || []),
+      ...(completedContests || [])
+    ];
+
+    if (allContests.length === 0) {
       setIsSearching(false);
-    }, 500);
+      return;
+    }
+
+    const searchTerms = query.toLowerCase().split(' ');
+
+    // Search through contests with some AI-like fuzzy matching
+    const matchedResults = allContests.map(contest => {
+      // Calculate match score based on different fields
+      let score = 0;
+      const title = contest.title.toLowerCase();
+      const description = contest.description.toLowerCase();
+      const category = contest.category.name.toLowerCase();
+
+      // Exact matches in title (highest priority)
+      if (title.includes(query.toLowerCase())) {
+        score += 10;
+      }
+
+      // Exact matches in category
+      if (category.includes(query.toLowerCase())) {
+        score += 8;
+      }
+
+      // Exact matches in description
+      if (description.includes(query.toLowerCase())) {
+        score += 5;
+      }
+
+      // Partial matches for individual words
+      searchTerms.forEach(term => {
+        // Similar word matching (simulating AI understanding)
+        const similarWords: Record<string, string[]> = {
+          'forest': ['jungle', 'woods', 'trees', 'nature'],
+          'urban': ['city', 'street', 'building', 'architecture'],
+          'sea': ['ocean', 'water', 'beach', 'coast'],
+          'portrait': ['people', 'face', 'person', 'human'],
+          'landscape': ['scenery', 'vista', 'panorama', 'nature'],
+          'animal': ['wildlife', 'pet', 'creature', 'fauna'],
+          'night': ['evening', 'dark', 'stars', 'moon'],
+          'macro': ['close-up', 'detail', 'micro', 'tiny'],
+        };
+
+        // Check if search term has similar words that match our content
+        Object.entries(similarWords).forEach(([keyword, alternatives]) => {
+          if (term === keyword) {
+            // The search term is a keyword we know
+            if (alternatives.some(alt => title.includes(alt) || description.includes(alt) || category.includes(alt))) {
+              score += 7; // Good score for semantic matches
+            }
+          } else if (alternatives.includes(term)) {
+            // The search term is an alternative, check if the main keyword is in our content
+            if (title.includes(keyword) || description.includes(keyword) || category.includes(keyword)) {
+              score += 7; // Good score for semantic matches
+            }
+          }
+        });
+
+        // Word-by-word matching
+        if (title.includes(term)) score += 2;
+        if (category.includes(term)) score += 1.5;
+        if (description.includes(term)) score += 1;
+      });
+
+      return {
+        ...contest,
+        score
+      };
+    })
+    .filter(result => result.score > 0) // Only include results with some relevance
+    .sort((a, b) => b.score - a.score); // Sort by relevance
+
+    setResults(matchedResults);
+    setIsSearching(false);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    performSearch(searchQuery);
+    if (searchQuery.trim()) {
+      // Update URL with search query
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      performSearch(searchQuery.trim());
+    }
+  };
+
+  const getSubmissionCount = (contestId: string) => {
+    return photos.filter(photo => photo.contestId === contestId).length;
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-6 px-4">
-      <h1 className="text-3xl font-bold mb-6">Search</h1>
-      
-      <form onSubmit={handleSearch} className="mb-8">
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search contests, photos, or photographers..."
-            className="pl-10 pr-32"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Button 
-            type="submit" 
-            size="sm" 
-            className="absolute right-1 top-1"
-            disabled={isSearching || !searchQuery.trim()}
-          >
-            {isSearching ? 'Searching...' : 'Search'}
-          </Button>
-        </div>
-      </form>
-      
-      {results && (
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="contests">Contests</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all">
-            {results.contests.length === 0 && results.photos.length === 0 && results.users.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {results.contests.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-semibold">Contests</h2>
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Calendar size={14} />
-                        <span>{results.contests.length}</span>
-                      </Badge>
-                    </div>
-                    <div className="space-y-4">
-                      {results.contests.slice(0, 3).map(contest => (
-                        <Card key={contest.id} className="overflow-hidden">
-                          <Link to={`/contests/${contest.id}`}>
-                            <CardContent className="p-0">
-                              <div className="flex items-center">
-                                <img 
-                                  src={contest.coverImageUrl} 
-                                  alt={contest.title}
-                                  className="h-24 w-24 object-cover"
-                                />
-                                <div className="p-4">
-                                  <h3 className="font-medium">{contest.title}</h3>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    {contest.category.name} · {contest.status}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Link>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {results.photos.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-semibold">Photos</h2>
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Image size={14} />
-                        <span>{results.photos.length}</span>
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      {results.photos.slice(0, 4).map(photo => (
-                        <Card key={photo.id} className="overflow-hidden">
-                          <Link to={`/contests/${photo.contestId}`}>
-                            <CardContent className="p-0">
-                              <img 
-                                src={photo.imageUrl} 
-                                alt={photo.caption || "Contest photo"}
-                                className="w-full h-40 object-cover"
-                              />
-                              <div className="p-3">
-                                <p className="text-sm font-medium line-clamp-1">
-                                  {photo.caption || "Untitled"}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  by {photo.username}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Link>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {results.users.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-semibold">Photographers</h2>
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <User size={14} />
-                        <span>{results.users.length}</span>
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {results.users.slice(0, 3).map(user => (
-                        <Card key={user.id}>
-                          <CardContent className="p-3">
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">{user.username}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="contests">
-            {results.contests.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No contests found</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {results.contests.map(contest => (
-                  <Card key={contest.id} className="overflow-hidden">
-                    <Link to={`/contests/${contest.id}`}>
-                      <CardContent className="p-0">
-                        <div className="md:flex items-center">
-                          <img 
-                            src={contest.coverImageUrl} 
-                            alt={contest.title}
-                            className="h-48 md:h-32 md:w-48 w-full object-cover"
-                          />
-                          <div className="p-4">
-                            <h3 className="font-medium">{contest.title}</h3>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {contest.description}
-                            </p>
-                            <div className="flex items-center mt-2">
-                              <Badge className={
-                                contest.status === 'active' ? 'bg-snapstar-green text-white' :
-                                contest.status === 'voting' ? 'bg-snapstar-blue text-white' :
-                                contest.status === 'upcoming' ? 'bg-snapstar-orange text-white' :
-                                'bg-snapstar-gray text-white'
-                              }>
-                                {contest.status.charAt(0).toUpperCase() + contest.status.slice(1)}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground ml-2">
-                                {contest.status === 'upcoming' 
-                                  ? `Starts: ${contest.startDate.toLocaleDateString()}`
-                                  : `Ends: ${contest.endDate.toLocaleDateString()}`
-                                }
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Link>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="photos">
-            {results.photos.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No photos found</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {results.photos.map(photo => (
-                  <Card key={photo.id} className="overflow-hidden">
-                    <Link to={`/contests/${photo.contestId}`}>
-                      <CardContent className="p-0">
-                        <img 
-                          src={photo.imageUrl} 
-                          alt={photo.caption || "Contest photo"}
-                          className="w-full h-48 object-cover"
-                        />
-                        <div className="p-3">
-                          <p className="text-sm font-medium line-clamp-1">
-                            {photo.caption || "Untitled"}
-                          </p>
-                          <div className="flex justify-between items-center mt-1">
-                            <p className="text-xs text-muted-foreground">
-                              by {photo.username}
-                            </p>
-                            <div className="flex items-center text-yellow-500 text-xs">
-                              <span className="mr-1">★</span>
-                              <span>{photo.averageRating.toFixed(1)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Link>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="users">
-            {results.users.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No users found</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {results.users.map(user => (
-                  <Card key={user.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="size-12">
-                          <AvatarImage src={user.avatarUrl} alt={user.username} />
-                          <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{user.username}</p>
-                          <p className="text-sm text-muted-foreground mt-1">Photographer</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      )}
-      
-      {!results && !isSearching && (
-        <div className="text-center py-16">
-          <SearchIcon className="mx-auto size-16 text-muted-foreground mb-4" />
-          <h2 className="text-lg font-medium mb-2">Search for contests, photos, and photographers</h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Enter a search term above to find contests, photos, or photographers that match your interests.
+    <div className="container max-w-4xl py-6">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Search Contests</h1>
+          <p className="text-muted-foreground">
+            Find photography contests by keyword or category
           </p>
         </div>
-      )}
+
+        <form onSubmit={handleSubmit} className="flex w-full gap-2">
+          <Input
+            type="text"
+            placeholder="Search for contests..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" disabled={!searchQuery.trim()}>
+            <SearchIcon className="mr-2 h-4 w-4" />
+            Search
+          </Button>
+        </form>
+
+        {isLoading ? (
+          <div className="py-8 grid gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-24 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : queryFromUrl && results.length === 0 ? (
+          <div className="py-8 text-center">
+            <h2 className="text-xl font-semibold mb-2">No contests found</h2>
+            <p className="text-muted-foreground">
+              We couldn't find any contests matching "{queryFromUrl}"
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/contests')} 
+              className="mt-4"
+            >
+              Browse All Contests
+            </Button>
+          </div>
+        ) : results.length > 0 ? (
+          <div className="py-4 space-y-6">
+            <h2 className="text-xl font-semibold">
+              {results.length} result{results.length !== 1 ? 's' : ''} for "{queryFromUrl}"
+            </h2>
+            <div className="grid gap-4">
+              {results.map((contest) => (
+                <Card key={contest.id} className="overflow-hidden">
+                  <div className="md:flex">
+                    <div 
+                      className="h-40 md:h-auto md:w-48 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
+                    />
+                    <div className="flex flex-col flex-1">
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle>{contest.title}</CardTitle>
+                            <CardDescription>{contest.category.name}</CardDescription>
+                          </div>
+                          <Badge className={getStatusColor(contest.status)}>
+                            {contest.status.charAt(0).toUpperCase() + contest.status.slice(1)}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pb-2 flex-1">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {contest.description}
+                        </p>
+                        <div className="flex flex-wrap gap-4 mt-3">
+                          <div className="flex items-center gap-1 text-sm">
+                            {contest.status === 'upcoming' ? (
+                              <>
+                                <Calendar size={16} className="text-muted-foreground" />
+                                <span>Starts: {formatDate(contest.startDate)}</span>
+                              </>
+                            ) : contest.status === 'active' || contest.status === 'voting' ? (
+                              <>
+                                <Clock size={16} className="text-muted-foreground" />
+                                <span>Ends: {formatDate(contest.endDate)}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Trophy size={16} className="text-muted-foreground" />
+                                <span>Completed: {formatDate(contest.endDate)}</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Users size={16} className="text-muted-foreground" />
+                            <span>{getSubmissionCount(contest.id)} entries</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button asChild className="w-full">
+                          <Link to={`/contests/${contest.id}`}>
+                            {contest.status === 'active' 
+                              ? 'Submit Photo' 
+                              : contest.status === 'voting' 
+                                ? 'Vote Now' 
+                                : 'View Details'}
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : !queryFromUrl ? (
+          <div className="py-12 text-center">
+            <SearchIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h2 className="mt-4 text-xl font-semibold">Search for contests</h2>
+            <p className="mt-2 text-muted-foreground">
+              Enter keywords, categories, or topics to find photography contests
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };

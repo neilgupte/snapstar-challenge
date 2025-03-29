@@ -1,174 +1,194 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { 
+  Camera, 
+  FileImage, 
+  Award, 
+  Shield, 
+  Copyright, 
+  AlertTriangle, 
+  Calendar, 
+  Clock
+} from 'lucide-react';
 
-const Rules = () => {
+const RulesPage = () => {
   return (
-    <div className="container max-w-4xl mx-auto py-6 px-4">
-      <h1 className="text-3xl font-bold mb-6">SnapStar Contest Rules</h1>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>📝 General Contest Rules</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Welcome to SnapStar! These rules apply to all photography contests on our platform. Please read them carefully before participating.</p>
+    <div className="container max-w-4xl py-6">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Contest Rules & Guidelines</h1>
+          <p className="mt-2 text-muted-foreground">
+            Please read and follow these rules to participate in SnapStar photography contests
+          </p>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="item-1">
+            <AccordionTrigger className="flex items-center gap-2">
+              <Camera className="h-5 w-5 text-snapstar-purple" />
+              <span>Photo Submission Rules</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm">
+              <p>To maintain quality and fairness, all photo submissions must adhere to these rules:</p>
+              
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-muted-foreground">Photos must be in JPEG or PNG format only</li>
+                <li className="text-muted-foreground">Maximum file size is 10MB per photo</li>
+                <li className="text-muted-foreground">Minimum resolution is 1600×1200 pixels</li>
+                <li className="text-muted-foreground">Basic editing is allowed: exposure, contrast, white balance, and cropping</li>
+                <li className="text-muted-foreground">No watermarks, frames, or borders are permitted</li>
+                <li className="font-semibold">Photos must be taken during the active contest period</li>
+                <li className="text-muted-foreground">Each participant can submit only one photo per contest</li>
+                <li className="text-muted-foreground">Free users are limited to 3 submissions per week across all contests</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
           
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="age-requirement">
-              <AccordionTrigger>Age Requirement</AccordionTrigger>
-              <AccordionContent>
-                <p>All participants must be 12 years of age or older. Users under 18 should have parental permission to enter contests.</p>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="eligibility">
-              <AccordionTrigger>Eligibility</AccordionTrigger>
-              <AccordionContent>
-                <p>Contests are open to amateur and professional photographers worldwide, unless specified otherwise in the specific contest rules.</p>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="submission-limit">
-              <AccordionTrigger>Submission Limits</AccordionTrigger>
-              <AccordionContent>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Free users can submit up to 3 photos per week across all contests.</li>
-                  <li>Premium users have unlimited submissions.</li>
-                  <li>Each user may submit a maximum of 2 photos per individual contest, unless stated otherwise.</li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="original-content">
-              <AccordionTrigger>Original Content</AccordionTrigger>
-              <AccordionContent>
-                <p>All submitted photographs must be the original work of the contestant. By submitting an entry, you confirm that you are the sole creator and copyright holder of the image.</p>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="copyright">
-              <AccordionTrigger>Copyright and Usage Rights</AccordionTrigger>
-              <AccordionContent>
-                <p>Photographers retain copyright of their images. By entering, you grant SnapStar a non-exclusive, worldwide, royalty-free license to use your submitted images for promotional purposes related to the contest.</p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
-      </Card>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>📸 Photo Requirements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="file-format">
-              <AccordionTrigger>File Format and Size</AccordionTrigger>
-              <AccordionContent>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Accepted formats: JPEG, PNG</li>
-                  <li>Maximum file size: 20MB</li>
-                  <li>Minimum resolution: 1920 pixels on the longest side</li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="editing">
-              <AccordionTrigger>Photo Editing</AccordionTrigger>
-              <AccordionContent>
-                <p>Basic editing is allowed, including:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Adjustments to exposure, contrast, saturation</li>
-                  <li>Cropping and straightening</li>
-                  <li>Noise reduction and sharpening</li>
-                </ul>
-                <p className="mt-2">Excessive manipulation that alters the authenticity of the image is not permitted, including:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Adding or removing significant elements</li>
-                  <li>Compositing multiple images</li>
-                  <li>Digital art that does not maintain the integrity of the original photograph</li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="watermarks">
-              <AccordionTrigger>Watermarks</AccordionTrigger>
-              <AccordionContent>
-                <p>Images should not contain watermarks, borders, signatures, or other identifying text. SnapStar will display proper attribution with all photos.</p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
-      </Card>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>🏆 Voting and Winners</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="voting-process">
-              <AccordionTrigger>Voting Process</AccordionTrigger>
-              <AccordionContent>
-                <p>After the submission period ends, entries enter a voting phase where:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>All registered users can vote on submissions</li>
-                  <li>Each user can rate photos on a scale of 1-5 stars</li>
-                  <li>Users cannot vote on their own submissions</li>
-                  <li>Voting typically lasts 7 days after the submission deadline</li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="winner-selection">
-              <AccordionTrigger>Winner Selection</AccordionTrigger>
-              <AccordionContent>
-                <p>Winners are determined by:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Highest average rating (minimum 5 votes required)</li>
-                  <li>In case of a tie, the photo with more votes wins</li>
-                  <li>If still tied, contest judges will select the winner</li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="prizes">
-              <AccordionTrigger>Prizes</AccordionTrigger>
-              <AccordionContent>
-                <p>Prizes vary by contest and may include:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Featured placement on SnapStar homepage and social media</li>
-                  <li>SnapStar Premium membership</li>
-                  <li>Photography equipment and gift cards (for sponsored contests)</li>
-                  <li>Exhibition opportunities (for special events)</li>
-                </ul>
-                <p className="mt-2">Specific prizes will be listed in each contest description.</p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>⚠️ Disqualification</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Entries may be disqualified for the following reasons:</p>
-          <ul className="list-disc pl-6 space-y-2">
-            <li>Content violating our community guidelines (inappropriate, offensive, or illegal content)</li>
-            <li>Images that aren't the original work of the participant</li>
-            <li>Excessive manipulation beyond the allowed editing guidelines</li>
-            <li>Evidence of vote manipulation or fraudulent activities</li>
-            <li>Submission does not follow the specific contest theme or requirements</li>
-          </ul>
-          <p className="mt-4">SnapStar reserves the right to disqualify any entry at its discretion and to modify these rules as needed. Any rule changes will be announced in advance.</p>
-        </CardContent>
-      </Card>
+          <AccordionItem value="item-2">
+            <AccordionTrigger className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-snapstar-blue" />
+              <span>Contest Timeline Requirements</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm">
+              <p className="font-semibold">All photographs must be taken during the active contest period</p>
+              
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-muted-foreground">EXIF data will be analyzed to verify the date the photo was taken</li>
+                <li className="text-muted-foreground">Photos taken before the contest began will be automatically rejected</li>
+                <li className="text-muted-foreground">Photos taken after the contest submission deadline will be automatically rejected</li>
+                <li className="text-muted-foreground">The date and time settings on your camera should be accurate</li>
+                <li className="text-muted-foreground">Photos without valid EXIF data may be subject to additional verification</li>
+              </ul>
+              
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md flex gap-2">
+                <Clock className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-amber-800">
+                  The timing restriction ensures all contestants have the same opportunity and encourages capturing fresh, original content specifically for each contest.
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-3">
+            <AccordionTrigger className="flex items-center gap-2">
+              <FileImage className="h-5 w-5 text-snapstar-green" />
+              <span>Editing & Manipulation Policies</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm">
+              <p>We allow basic post-processing while maintaining photographic integrity:</p>
+              
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-muted-foreground">Permitted: Adjustments to exposure, contrast, saturation, white balance</li>
+                <li className="text-muted-foreground">Permitted: Cropping, straightening, lens correction</li>
+                <li className="text-muted-foreground">Permitted: Black and white conversion</li>
+                <li className="text-muted-foreground">Permitted: Removal of sensor dust spots</li>
+                <li className="font-semibold text-snapstar-red">Not Permitted: Adding or removing elements</li>
+                <li className="font-semibold text-snapstar-red">Not Permitted: Extensive alteration of colors/tones that change reality</li>
+                <li className="font-semibold text-snapstar-red">Not Permitted: AI-generated or AI-altered images</li>
+                <li className="font-semibold text-snapstar-red">Not Permitted: Composite images from multiple photographs</li>
+              </ul>
+              
+              <p>Note: Some specialty contests may have different editing rules. Check the specific contest description for details.</p>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-4">
+            <AccordionTrigger className="flex items-center gap-2">
+              <Copyright className="h-5 w-5 text-snapstar-orange" />
+              <span>Copyright & Ownership</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm">
+              <p>Regarding rights and ownership of submitted photographs:</p>
+              
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-muted-foreground">You must be the original creator of any photo you submit</li>
+                <li className="text-muted-foreground">You must have all necessary rights to the image</li>
+                <li className="text-muted-foreground">You retain copyright to all images you submit</li>
+                <li className="text-muted-foreground">By submitting, you grant SnapStar limited rights to display your photo on our platform</li>
+                <li className="text-muted-foreground">Winning photos may be featured in our promotional materials with attribution</li>
+                <li className="text-muted-foreground">You are responsible for obtaining any necessary model or property releases</li>
+              </ul>
+              
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-md flex gap-2">
+                <Shield className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <p className="text-blue-800">
+                  We respect your rights as a photographer and will always provide proper attribution when featuring your work. You always maintain ownership of your photos.
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-5">
+            <AccordionTrigger className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-yellow-500" />
+              <span>Voting & Winner Selection</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm">
+              <p>How winners are determined:</p>
+              
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-muted-foreground">After submission period ends, all approved photos enter the voting phase</li>
+                <li className="text-muted-foreground">Community members rate photos on a scale of 1-5 stars</li>
+                <li className="text-muted-foreground">You cannot vote on your own photos</li>
+                <li className="text-muted-foreground">Premium judges may provide additional ratings to selected photos</li>
+                <li className="text-muted-foreground">Final scores are calculated using a weighted average system</li>
+                <li className="text-muted-foreground">In case of ties, the photo with more total votes wins</li>
+                <li className="text-muted-foreground">Contest organizers have final decision authority in disputes</li>
+              </ul>
+              
+              <p>Winners are typically announced within 48 hours after the voting period ends.</p>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-6">
+            <AccordionTrigger className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <span>Prohibited Content</span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm">
+              <p>The following types of content are not permitted:</p>
+              
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-muted-foreground">Obscene or explicit content</li>
+                <li className="text-muted-foreground">Violent or disturbing imagery</li>
+                <li className="text-muted-foreground">Content that promotes illegal activities</li>
+                <li className="text-muted-foreground">Discriminatory or hateful content</li>
+                <li className="text-muted-foreground">Content that infringes on others' rights</li>
+                <li className="text-muted-foreground">Heavily watermarked or branded images</li>
+                <li className="text-muted-foreground">Spam or misleading content</li>
+                <li className="text-muted-foreground">Images showing unsafe or harmful practices</li>
+              </ul>
+              
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md flex gap-2">
+                <Shield className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-red-800">
+                  Violations of these content rules may result in removal of your submission and potential account restrictions.
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        
+        <div className="rounded-lg border p-4 bg-muted/30">
+          <h3 className="text-lg font-semibold mb-2">Have Questions?</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            If you have any questions about these rules or need clarification on specific points, please contact our support team.
+          </p>
+          <Button asChild>
+            <Link to="/profile">Return to Profile</Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Rules;
+export default RulesPage;
