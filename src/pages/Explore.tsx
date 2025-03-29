@@ -15,6 +15,19 @@ import { getPhotosByContestId, voteOnPhoto } from '@/services/contestService';
 import { photos } from '@/services/mockData';
 import { Photo } from '@/types';
 import { formatDate } from '@/utils/formatUtils';
+import CommentSection from '@/components/CommentSection';
+import { v4 as uuidv4 } from 'uuid';
+
+interface Comment {
+  id: string;
+  userId: string;
+  username: string;
+  text: string;
+  createdAt: Date;
+  avatarUrl?: string;
+}
+
+const photoComments: Record<string, Comment[]> = {};
 
 const Explore = () => {
   const { user } = useAuth();
@@ -23,6 +36,7 @@ const Explore = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
+  const [userVotes, setUserVotes] = useState<Record<string, number>>({});
   
   const { data: allPhotos, isLoading } = useQuery({
     queryKey: ['explorePhotos'],
@@ -43,6 +57,11 @@ const Explore = () => {
     onSuccess: (_, variables) => {
       toast.success('Vote submitted!');
       
+      setUserVotes(prev => ({
+        ...prev,
+        [variables.photoId]: variables.rating
+      }));
+      
       setSelectedPhoto(null);
       setSelectedRating(0);
       
@@ -52,6 +71,29 @@ const Explore = () => {
       toast.error(error.message || 'Failed to submit vote');
     },
   });
+  
+  const addComment = (photoId: string, text: string) => {
+    if (!user) return;
+    
+    const newComment: Comment = {
+      id: uuidv4(),
+      userId: user.id,
+      username: user.username || 'User',
+      text,
+      createdAt: new Date(),
+      avatarUrl: user.avatarUrl
+    };
+    
+    if (!photoComments[photoId]) {
+      photoComments[photoId] = [];
+    }
+    
+    photoComments[photoId] = [...photoComments[photoId], newComment];
+    
+    queryClient.invalidateQueries({ queryKey: ['explorePhotos'] });
+    
+    toast.success('Comment added');
+  };
   
   const handleVote = (photoId: string, rating: number) => {
     if (!user) {
@@ -135,6 +177,9 @@ const Explore = () => {
                       setSelectedRating={setSelectedRating}
                       handleVote={handleVote}
                       isPending={voteMutation.isPending}
+                      userVote={userVotes[photo.id]}
+                      comments={photoComments[photo.id] || []}
+                      onAddComment={addComment}
                     />
                   ))}
               </div>
@@ -182,6 +227,9 @@ const Explore = () => {
                       setSelectedRating={setSelectedRating}
                       handleVote={handleVote}
                       isPending={voteMutation.isPending}
+                      userVote={userVotes[photo.id]}
+                      comments={photoComments[photo.id] || []}
+                      onAddComment={addComment}
                     />
                   ))}
               </div>
@@ -247,6 +295,9 @@ interface PhotoCardProps {
   setSelectedRating: (rating: number) => void;
   handleVote: (photoId: string, rating: number) => void;
   isPending: boolean;
+  userVote?: number;
+  comments: Comment[];
+  onAddComment: (photoId: string, text: string) => void;
 }
 
 const PhotoCard: React.FC<PhotoCardProps> = ({
@@ -258,6 +309,9 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
   setSelectedRating,
   handleVote,
   isPending,
+  userVote,
+  comments,
+  onAddComment
 }) => {
   return (
     <Card className="overflow-hidden">
@@ -290,56 +344,66 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
         </div>
       </CardHeader>
       
-      <CardFooter className="flex justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <div
-              className="star-rating"
-              onMouseLeave={() => {
-                if (selectedPhoto === photo.id) {
-                  setSelectedPhoto(null);
-                  setSelectedRating(0);
-                }
-              }}
-            >
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <button
-                  key={rating}
-                  className={`star-rating-item ${
-                    selectedPhoto === photo.id && rating <= selectedRating
-                      ? 'active animate-pulse-star'
-                      : rating <= Math.round(photo.averageRating)
-                      ? 'active'
-                      : ''
-                  }`}
-                  onClick={() => handleVote(photo.id, rating)}
-                  onMouseEnter={() => {
-                    setSelectedPhoto(photo.id);
-                    setSelectedRating(rating);
-                  }}
-                  disabled={isPending || photo.userId === user?.id}
-                >
-                  ★
-                </button>
-              ))}
+      <CardFooter className="flex flex-col">
+        <div className="flex justify-between w-full mb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <div
+                className="star-rating"
+                onMouseLeave={() => {
+                  if (selectedPhoto === photo.id) {
+                    setSelectedPhoto(null);
+                    setSelectedRating(0);
+                  }
+                }}
+              >
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    className={`star-rating-item ${
+                      userVote && rating <= userVote
+                        ? 'active'
+                        : selectedPhoto === photo.id && rating <= selectedRating
+                        ? 'active animate-pulse-star'
+                        : rating <= Math.round(photo.averageRating)
+                        ? 'active'
+                        : ''
+                    }`}
+                    onClick={() => handleVote(photo.id, rating)}
+                    onMouseEnter={() => {
+                      setSelectedPhoto(photo.id);
+                      setSelectedRating(rating);
+                    }}
+                    disabled={isPending || photo.userId === user?.id || userVote !== undefined}
+                    title={userVote !== undefined ? "You've already voted" : "Rate this photo"}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
             </div>
+            
+            <span className="text-sm">
+              {photo.averageRating > 0 ? photo.averageRating.toFixed(1) : '-'}
+            </span>
           </div>
           
-          <span className="text-sm">
-            {photo.averageRating > 0 ? photo.averageRating.toFixed(1) : '-'}
-          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Heart size={16} className="text-muted-foreground" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Flag size={16} className="text-muted-foreground" />
+            </Button>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Heart size={16} className="text-muted-foreground" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MessageSquare size={16} className="text-muted-foreground" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Flag size={16} className="text-muted-foreground" />
-          </Button>
+        <div className="w-full mt-2">
+          <CommentSection 
+            photoId={photo.id} 
+            comments={comments}
+            onAddComment={onAddComment}
+          />
         </div>
       </CardFooter>
     </Card>

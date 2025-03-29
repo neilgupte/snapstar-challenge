@@ -23,7 +23,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
       
-      {user && !isAuthPage && <BottomNavigation />}
+      {/* Show bottom navigation regardless of auth state */}
+      <BottomNavigation />
     </div>
   );
 };

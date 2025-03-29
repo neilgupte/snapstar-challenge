@@ -16,6 +16,19 @@ import { Label } from '@/components/ui/label';
 import { Check } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useIsMobile } from '@/hooks/use-mobile';
+import CommentSection from '@/components/CommentSection';
+import { v4 as uuidv4 } from 'uuid';
+
+interface Comment {
+  id: string;
+  userId: string;
+  username: string;
+  text: string;
+  createdAt: Date;
+  avatarUrl?: string;
+}
+
+const photoComments: Record<string, Comment[]> = {};
 
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +43,7 @@ const ContestDetail = () => {
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [signInDialogOpen, setSignInDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [userVotes, setUserVotes] = useState<Record<string, number>>({});
   
   const { data: contest, isLoading: isLoadingContest } = useQuery({
     queryKey: ['contest', id],
@@ -95,6 +109,29 @@ const ContestDetail = () => {
     },
   });
   
+  const addComment = (photoId: string, text: string) => {
+    if (!user) return;
+    
+    const newComment: Comment = {
+      id: uuidv4(),
+      userId: user.id,
+      username: user.username || 'User',
+      text,
+      createdAt: new Date(),
+      avatarUrl: user.avatarUrl
+    };
+    
+    if (!photoComments[photoId]) {
+      photoComments[photoId] = [];
+    }
+    
+    photoComments[photoId] = [...photoComments[photoId], newComment];
+    
+    queryClient.invalidateQueries({ queryKey: ['contestPhotos', id] });
+    
+    toast.success('Comment added');
+  };
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -132,6 +169,11 @@ const ContestDetail = () => {
       setSignInDialogOpen(true);
       return;
     }
+    
+    setUserVotes(prev => ({
+      ...prev,
+      [photoId]: rating
+    }));
     
     voteMutation.mutate({ photoId, rating });
   };
@@ -405,98 +447,111 @@ const ContestDetail = () => {
                       </div>
                     </CardHeader>
                     
-                    <CardFooter className="flex justify-between pt-0">
-                      {isCompleted ? (
-                        <div className="flex items-center gap-2">
-                          <div className="flex text-snapstar-orange">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                size={16}
-                                fill={i < Math.round(photo.averageRating) ? 'currentColor' : 'none'}
-                                className={i < Math.round(photo.averageRating) ? 'text-snapstar-orange' : 'text-gray-300'}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm font-medium">
-                            {photo.averageRating.toFixed(1)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            ({photo.voteCount} votes)
-                          </span>
-                        </div>
-                      ) : isVoting ? (
-                        user && photo.userId !== user.id ? (
-                          <div className="flex flex-col items-start gap-1">
-                            <div
-                              className="star-rating"
-                              onMouseLeave={() => {
-                                if (selectedPhoto === photo.id) {
-                                  setSelectedPhoto(null);
-                                  setSelectedRating(0);
-                                }
-                              }}
-                            >
-                              {[1, 2, 3, 4, 5].map((rating) => (
-                                <button
-                                  key={rating}
-                                  className={`star-rating-item ${
-                                    selectedPhoto === photo.id && rating <= selectedRating
-                                      ? 'active animate-pulse-star'
-                                      : ''
-                                  }`}
-                                  onClick={() => handleVote(photo.id, rating)}
-                                  onMouseEnter={() => {
-                                    setSelectedPhoto(photo.id);
-                                    setSelectedRating(rating);
-                                  }}
-                                  disabled={voteMutation.isPending}
-                                >
-                                  ★
-                                </button>
+                    <CardFooter className="flex flex-col">
+                      <div className="flex justify-between w-full">
+                        {isCompleted ? (
+                          <div className="flex items-center gap-2">
+                            <div className="flex text-snapstar-orange">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={16}
+                                  fill={i < Math.round(photo.averageRating) ? 'currentColor' : 'none'}
+                                  className={i < Math.round(photo.averageRating) ? 'text-snapstar-orange' : 'text-gray-300'}
+                                />
                               ))}
                             </div>
+                            <span className="text-sm font-medium">
+                              {photo.averageRating.toFixed(1)}
+                            </span>
                             <span className="text-xs text-muted-foreground">
-                              Rate this photo
+                              ({photo.voteCount} votes)
                             </span>
                           </div>
+                        ) : isVoting ? (
+                          user && photo.userId !== user.id ? (
+                            <div className="flex flex-col items-start gap-1">
+                              <div
+                                className="star-rating"
+                                onMouseLeave={() => {
+                                  if (selectedPhoto === photo.id) {
+                                    setSelectedPhoto(null);
+                                    setSelectedRating(0);
+                                  }
+                                }}
+                              >
+                                {[1, 2, 3, 4, 5].map((rating) => (
+                                  <button
+                                    key={rating}
+                                    className={`star-rating-item ${
+                                      userVotes[photo.id] && rating <= userVotes[photo.id]
+                                        ? 'active'
+                                        : selectedPhoto === photo.id && rating <= selectedRating
+                                        ? 'active animate-pulse-star'
+                                        : ''
+                                    }`}
+                                    onClick={() => handleVote(photo.id, rating)}
+                                    onMouseEnter={() => {
+                                      setSelectedPhoto(photo.id);
+                                      setSelectedRating(rating);
+                                    }}
+                                    disabled={voteMutation.isPending || userVotes[photo.id] !== undefined}
+                                    title={userVotes[photo.id] !== undefined ? "You've already voted" : "Rate this photo"}
+                                  >
+                                    ★
+                                  </button>
+                                ))}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {userVotes[photo.id] !== undefined ? "Thanks for your vote!" : "Rate this photo"}
+                              </span>
+                            </div>
+                          ) : (
+                            <div>
+                              {photo.userId === user?.id ? (
+                                <Badge variant="outline">Your Entry</Badge>
+                              ) : (
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => setSignInDialogOpen(true)}
+                                >
+                                  Sign in to vote
+                                </Button>
+                              )}
+                            </div>
+                          )
                         ) : (
                           <div>
                             {photo.userId === user?.id ? (
                               <Badge variant="outline">Your Entry</Badge>
                             ) : (
-                              <Button 
-                                variant="default" 
-                                size="sm"
-                                onClick={() => setSignInDialogOpen(true)}
-                              >
-                                Sign in to vote
-                              </Button>
+                              <span className="text-xs text-muted-foreground">
+                                {isActive
+                                  ? 'Voting starts after submission period'
+                                  : ''}
+                              </span>
                             )}
                           </div>
-                        )
-                      ) : (
-                        <div>
-                          {photo.userId === user?.id ? (
-                            <Badge variant="outline">Your Entry</Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              {isActive
-                                ? 'Voting starts after submission period'
-                                : ''}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                        )}
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive"
+                          title="Report Photo"
+                        >
+                          <Flag size={16} />
+                        </Button>
+                      </div>
                       
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive"
-                        title="Report Photo"
-                      >
-                        <Flag size={16} />
-                      </Button>
+                      <div className="w-full mt-4">
+                        <CommentSection 
+                          photoId={photo.id} 
+                          comments={photoComments[photo.id] || []}
+                          onAddComment={addComment}
+                        />
+                      </div>
                     </CardFooter>
                   </Card>
                 </CarouselItem>
