@@ -63,7 +63,12 @@ export const submitPhoto = async (
   );
   
   if (existingSubmission) {
-    throw new Error('You have already submitted a photo to this contest');
+    // If updating an existing submission
+    existingSubmission.imageUrl = imageUrl;
+    if (caption !== undefined) {
+      existingSubmission.caption = caption;
+    }
+    return existingSubmission;
   }
   
   // In a real app, we would also validate the contest is open for submissions
@@ -92,6 +97,41 @@ export const submitPhoto = async (
   photos.push(newPhoto);
   
   return newPhoto;
+};
+
+export const deletePhoto = async (photoId: string, userId: string): Promise<void> => {
+  await delay(800); // Simulate API delay
+  
+  // Find the photo
+  const photoIndex = photos.findIndex(photo => photo.id === photoId && photo.userId === userId);
+  
+  if (photoIndex === -1) {
+    throw new Error('Photo not found or you do not have permission to delete it');
+  }
+  
+  // Find the contest
+  const photo = photos[photoIndex];
+  const contest = contests.find(c => c.id === photo.contestId);
+  
+  if (!contest || contest.status !== 'active') {
+    throw new Error('You can only delete photos from active contests');
+  }
+  
+  // Remove the photo
+  photos.splice(photoIndex, 1);
+  
+  // Remove any votes for this photo
+  const voteIndices = votes.reduce((indices, vote, index) => {
+    if (vote.photoId === photoId) {
+      indices.push(index);
+    }
+    return indices;
+  }, [] as number[]);
+  
+  // Remove votes in reverse order to not affect indices
+  for (let i = voteIndices.length - 1; i >= 0; i--) {
+    votes.splice(voteIndices[i], 1);
+  }
 };
 
 export const voteOnPhoto = async (

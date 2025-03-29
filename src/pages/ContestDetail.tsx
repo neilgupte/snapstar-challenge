@@ -8,10 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, Upload, Star, AlertTriangle, Flag, User, Trophy, Camera, Vote, Eye, Edit } from 'lucide-react';
+import { 
+  Calendar, Clock, Upload, Star, AlertTriangle, Flag, 
+  User, Trophy, Camera, Vote, Eye, Edit, Trash2 
+} from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/contexts/AuthContext';
-import { getContestById, getPhotosByContestId, submitPhoto, hasUserSubmittedToContest, getUserVote, voteOnPhoto } from '@/services/contestService';
+import { 
+  getContestById, getPhotosByContestId, submitPhoto, 
+  hasUserSubmittedToContest, getUserVote, voteOnPhoto, deletePhoto 
+} from '@/services/contestService';
 import { Label } from '@/components/ui/label';
 import { Check } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -45,6 +51,7 @@ const ContestDetail = () => {
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [signInDialogOpen, setSignInDialogOpen] = useState(false);
   const [editSubmissionDialogOpen, setEditSubmissionDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isMobile = useIsMobile();
   const [userVotes, setUserVotes] = useState<Record<string, number>>({});
   
@@ -88,6 +95,27 @@ const ContestDetail = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to submit photo');
+    },
+  });
+  
+  const deletePhotoMutation = useMutation({
+    mutationFn: async (photoId: string) => {
+      if (!user) {
+        throw new Error('You must be logged in to delete a photo');
+      }
+      
+      return deletePhoto(photoId, user.id);
+    },
+    onSuccess: () => {
+      toast.success('Photo deleted successfully!');
+      setDeleteDialogOpen(false);
+      
+      queryClient.invalidateQueries({ queryKey: ['contestPhotos', id] });
+      queryClient.invalidateQueries({ queryKey: ['hasSubmitted', id, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['submissionCount', user?.id] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete photo');
     },
   });
   
@@ -175,6 +203,10 @@ const ContestDetail = () => {
     }
     
     submitPhotoMutation.mutate();
+  };
+  
+  const handleDelete = (photoId: string) => {
+    deletePhotoMutation.mutate(photoId);
   };
   
   const handleVote = (photoId: string, rating: number) => {
@@ -400,16 +432,18 @@ const ContestDetail = () => {
           
           {isActive && user && hasSubmitted && userSubmission && (
             <div className="flex flex-col items-end gap-2">
-              <Badge variant="outline" className="border-snapstar-green text-snapstar-green">
-                You've Submitted
-              </Badge>
+              <div className="flex gap-2">
+                <Button variant="outline" className="bg-white text-black border-black hover:bg-gray-100" onClick={() => setEditSubmissionDialogOpen(true)}>
+                  <Edit size={16} className="mr-2" />
+                  Edit
+                </Button>
+                <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+                  <Trash2 size={16} className="mr-2" />
+                  Delete
+                </Button>
+              </div>
+              
               <Dialog open={editSubmissionDialogOpen} onOpenChange={setEditSubmissionDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="bg-white text-black border-black hover:bg-gray-100">
-                    <Camera size={16} className="mr-2" />
-                    Change Photo
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>Update your submission</DialogTitle>
@@ -518,6 +552,46 @@ const ContestDetail = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              
+              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Delete your submission</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete your submission for the "{contest.title}" contest?
+                      This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="py-4">
+                    <div className="relative overflow-hidden rounded-lg">
+                      <AspectRatio ratio={16 / 9}>
+                        <img
+                          src={userSubmission.imageUrl}
+                          alt="Submission to delete"
+                          className="h-full w-full object-cover"
+                        />
+                      </AspectRatio>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setDeleteDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete(userSubmission.id)}
+                      disabled={deletePhotoMutation.isPending}
+                    >
+                      {deletePhotoMutation.isPending ? 'Deleting...' : 'Delete Photo'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </div>
@@ -562,7 +636,10 @@ const ContestDetail = () => {
           
           <Carousel className="w-full">
             <CarouselContent>
-              {photos.map((photo) => (
+              {photos.map((photo) => {
+                const isUserPhoto = photo.userId === user?.id;
+                
+                return (
                 <CarouselItem key={photo.id}>
                   <Card className="mx-1 overflow-hidden">
                     <AspectRatio ratio={4 / 3}>
@@ -571,6 +648,11 @@ const ContestDetail = () => {
                         alt={photo.caption || 'Contest entry'}
                         className="h-full w-full object-cover"
                       />
+                      {isUserPhoto && (
+                        <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
+                          <Check size={16} />
+                        </div>
+                      )}
                     </AspectRatio>
                     <CardHeader className="pb-2">
                       <div className="flex justify-between">
@@ -580,7 +662,9 @@ const ContestDetail = () => {
                           </CardTitle>
                           <CardDescription className="flex items-center gap-1">
                             <User size={14} />
-                            {photo.username}
+                            <Link to={`/profile/${photo.userId}`}>
+                              {photo.username}
+                            </Link>
                           </CardDescription>
                         </div>
                         
@@ -590,7 +674,7 @@ const ContestDetail = () => {
                           </Badge>
                         )}
                         
-                        {photo.userId === user?.id && (
+                        {isUserPhoto && (
                           <Badge variant="outline" className="border-snapstar-purple text-snapstar-purple">
                             Your Entry
                           </Badge>
@@ -620,7 +704,7 @@ const ContestDetail = () => {
                             </span>
                           </div>
                         ) : isVoting ? (
-                          user && photo.userId !== user.id ? (
+                          user && !isUserPhoto ? (
                             <div className="flex flex-col items-start gap-1">
                               <div
                                 className="star-rating"
@@ -691,10 +775,10 @@ const ContestDetail = () => {
                             </div>
                           ) : (
                             <div>
-                              {photo.userId === user?.id ? (
-                                <Badge variant="outline" className="border-snapstar-purple text-snapstar-purple">
-                                  Your Entry
-                                </Badge>
+                              {isUserPhoto ? (
+                                <div className="text-xs text-muted-foreground">
+                                  You can't vote on your own entry
+                                </div>
                               ) : (
                                 <Button 
                                   variant="outline" 
@@ -710,10 +794,10 @@ const ContestDetail = () => {
                           )
                         ) : (
                           <div>
-                            {photo.userId === user?.id ? (
-                              <Badge variant="outline" className="border-snapstar-purple text-snapstar-purple">
-                                Your Entry
-                              </Badge>
+                            {isUserPhoto ? (
+                              <div className="text-xs text-muted-foreground">
+                                {isActive ? 'Voting starts after submission period' : ''}
+                              </div>
                             ) : (
                               <span className="text-xs text-muted-foreground">
                                 {isActive
@@ -724,14 +808,16 @@ const ContestDetail = () => {
                           </div>
                         )}
                         
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive"
-                          title="Report Photo"
-                        >
-                          <Flag size={16} />
-                        </Button>
+                        {!isUserPhoto && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Report Photo"
+                          >
+                            <Flag size={16} />
+                          </Button>
+                        )}
                       </div>
                       
                       <div className="w-full mt-4">
@@ -748,7 +834,7 @@ const ContestDetail = () => {
                     </CardFooter>
                   </Card>
                 </CarouselItem>
-              ))}
+              )})}
             </CarouselContent>
             {!isMobile && (
               <>
@@ -793,7 +879,7 @@ const ContestDetail = () => {
               <h3 className="font-medium">You've entered this contest</h3>
               <p className="text-sm text-muted-foreground">
                 {isActive
-                  ? "Your photo has been submitted. You can change your entry using the 'Change Photo' button."
+                  ? "Your photo has been submitted. You can edit or delete your entry using the buttons at the top."
                   : isVoting
                   ? "The contest is now in the voting phase. You can't vote on your own photo."
                   : "The contest has ended. Check the results to see how your photo performed."}
@@ -834,19 +920,4 @@ const ContestDetail = () => {
           <DialogHeader>
             <DialogTitle>Sign in required</DialogTitle>
             <DialogDescription>
-              You need to sign in to vote on photos. It only takes a minute!
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col space-y-4 py-4">
-            <Button onClick={handleSignInClick}>Sign In</Button>
-            <Button variant="outline" onClick={handleSignUpClick}>
-              Create Account
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default ContestDetail;
+              You need to sign in to vote on photos. It only takes a

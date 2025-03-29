@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUserSubmissionCount } from '@/services/contestService';
-import { Upload, Image, Camera, AlertTriangle, Lock, X, Eye, Check } from 'lucide-react';
+import { Upload, Image, AlertTriangle, Lock, X, Eye, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { photos } from '@/services/mockData';
@@ -17,10 +17,6 @@ import { Filter } from 'lucide-react';
 const PhotoSubmission = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraOpen, setCameraOpen] = useState(false);
   const [filterMyEntries, setFilterMyEntries] = useState<'all' | 'entered' | 'not-entered'>('all');
   
   const { data: activeContests, isLoading: isLoadingContests } = useQuery({
@@ -42,59 +38,6 @@ const PhotoSubmission = () => {
       navigate('/signin');
     }
   }, [user, navigate]);
-
-  const startCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      
-      setStream(mediaStream);
-      setCameraActive(true);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast.error('Could not access camera. Please check permissions.');
-    }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-      setCameraActive(false);
-    }
-  };
-
-  const takePhoto = () => {
-    if (!videoRef.current) return;
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
-      
-      const photoDataUrl = canvas.toDataURL('image/jpeg');
-      
-      toast.success('Photo captured! Ready to submit to a contest');
-      stopCamera();
-      setCameraOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [stream]);
 
   if (!user) {
     return null;
@@ -143,7 +86,7 @@ const PhotoSubmission = () => {
                   This week's submissions
                 </p>
                 <div className="flex items-center gap-2">
-                  <Camera size={18} />
+                  <Image size={18} />
                   <span className="font-medium">
                     {isLoadingSubmissions ? '...' : submissionCount} of {user.maxSubmissionsPerWeek} 
                     {user.isPremium ? '' : ' free'} submissions used
@@ -162,64 +105,6 @@ const PhotoSubmission = () => {
             </div>
           </CardContent>
         </Card>
-        
-        <Dialog open={cameraOpen} onOpenChange={setCameraOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Take a Photo</DialogTitle>
-              <DialogDescription>
-                Use your camera to take a photo for a contest submission
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="relative overflow-hidden rounded-lg bg-black">
-              {cameraActive ? (
-                <>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full"
-                  />
-                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                    <Button 
-                      onClick={takePhoto}
-                      size="lg"
-                      className="rounded-full p-3 bg-white"
-                    >
-                      <div className="w-12 h-12 rounded-full border-2 border-black"></div>
-                    </Button>
-                  </div>
-                  <Button
-                    onClick={stopCamera}
-                    variant="destructive"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-12 space-y-4">
-                  <Camera size={48} className="text-muted-foreground" />
-                  <Button onClick={startCamera}>Start Camera</Button>
-                </div>
-              )}
-            </div>
-            
-            <DialogFooter>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  stopCamera();
-                  setCameraOpen(false);
-                }}
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         
         {isLoadingContests ? (
           <div className="py-8 text-center text-muted-foreground">
@@ -287,15 +172,6 @@ const PhotoSubmission = () => {
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
               <Button 
-                onClick={() => setCameraOpen(true)} 
-                variant="outline"
-                className="w-full sm:w-auto flex items-center gap-2 bg-white text-black border-gray-300"
-              >
-                <Camera size={18} />
-                Take a Photo
-              </Button>
-              <span className="text-muted-foreground hidden sm:inline">or</span>
-              <Button 
                 variant="outline" 
                 className="w-full sm:w-auto flex items-center gap-2 bg-white text-black border-gray-300"
                 asChild
@@ -359,7 +235,7 @@ const PhotoSubmission = () => {
                               </>
                             ) : (
                               <>
-                                <Camera size={16} className="mr-2" />
+                                <Upload size={16} className="mr-2" />
                                 Submit Photo
                               </>
                             )}
