@@ -69,60 +69,67 @@ const ContestsPage = () => {
       );
     }
 
-    return contests.map((contest) => (
-      <Card key={contest.id} className="mb-4 overflow-hidden group">
-        <CardContent className="p-0">
-          <Link to={`/contests/${contest.id}`} className="block">
-            <div className="relative">
-              <img 
-                src={contest.coverImageUrl} 
-                alt={contest.title}
-                className="w-full h-48 object-cover transition-transform group-hover:scale-105"
-              />
-              <div className="absolute top-2 right-2">
-                <Badge className={
-                  contest.status === 'active' ? 'bg-snapstar-green text-white' :
-                  contest.status === 'voting' ? 'bg-snapstar-blue text-white' :
-                  contest.status === 'upcoming' ? 'bg-snapstar-orange text-white' :
-                  'bg-snapstar-gray text-white'
-                }>
-                  {contest.status.charAt(0).toUpperCase() + contest.status.slice(1)}
-                </Badge>
-              </div>
-              <div className="p-4 space-y-3">
-                <h3 className="font-bold text-lg line-clamp-1">{contest.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{contest.description}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    {contest.status === 'upcoming' ? (
-                      <>
-                        <CalendarClock size={16} className="mr-1" />
-                        <span>Starts: {contest.startDate.toLocaleDateString()}</span>
-                      </>
-                    ) : contest.status === 'active' || contest.status === 'voting' ? (
-                      <>
-                        <Clock size={16} className="mr-1" />
-                        <span>Ends: {contest.endDate.toLocaleDateString()}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Trophy size={16} className="mr-1" />
-                        <span>Completed: {contest.endDate.toLocaleDateString()}</span>
-                      </>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Users size={16} className="mr-1" />
-                    <span>{getSubmissionCount(contest.id)} entries</span>
+    return contests.map((contest) => {
+      let statusBadge;
+      
+      if (contest.status === 'active') {
+        statusBadge = <Badge className="bg-snapstar-green text-white">Open</Badge>;
+      } else if (contest.status === 'voting') {
+        statusBadge = <Badge className="bg-snapstar-blue text-white">Voting</Badge>;
+      } else if (contest.status === 'upcoming') {
+        statusBadge = <Badge className="bg-snapstar-orange text-white">Upcoming</Badge>;
+      } else {
+        statusBadge = <Badge className="bg-snapstar-gray text-white">Completed</Badge>;
+      }
+      
+      return (
+        <Card key={contest.id} className="mb-4 overflow-hidden group">
+          <CardContent className="p-0">
+            <Link to={`/contests/${contest.id}`} className="block">
+              <div className="relative">
+                <img 
+                  src={contest.coverImageUrl} 
+                  alt={contest.title}
+                  className="w-full h-48 object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute top-2 right-2">
+                  {statusBadge}
+                </div>
+                <div className="p-4 space-y-3">
+                  <h3 className="font-bold text-lg line-clamp-1">{contest.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{contest.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      {contest.status === 'upcoming' ? (
+                        <>
+                          <CalendarClock size={16} className="mr-1" />
+                          <span>Starts: {contest.startDate.toLocaleDateString()}</span>
+                        </>
+                      ) : contest.status === 'active' || contest.status === 'voting' ? (
+                        <>
+                          <Clock size={16} className="mr-1" />
+                          <span>Ends: {contest.endDate.toLocaleDateString()}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Trophy size={16} className="mr-1" />
+                          <span>Completed: {contest.endDate.toLocaleDateString()}</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Users size={16} className="mr-1" />
+                      <span>{getSubmissionCount(contest.id)} entries</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        </CardContent>
-      </Card>
-    ));
+            </Link>
+          </CardContent>
+        </Card>
+      );
+    });
   };
 
   return (
@@ -131,9 +138,9 @@ const ContestsPage = () => {
       
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="active">Open Challenges</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="completed">Winners</TabsTrigger>
         </TabsList>
         
         <TabsContent value="active" className="space-y-4">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -8,15 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUpcomingContests, getCompletedContests, getUserSubmissionCount } from '@/services/contestService';
-import { Clock, Calendar, Camera, Award, Users, Filter, CheckCircle2, Eye } from 'lucide-react';
+import { Clock, Calendar, Camera, Award, Users, Filter, CheckCircle2, Eye, Trophy } from 'lucide-react';
 import { photos } from '@/services/mockData';
 import CountdownTimer from '@/components/CountdownTimer';
 import { formatDate, getTimeRemaining, getStatusColor } from '@/utils/formatUtils';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('active');
-  const [filterMyEntries, setFilterMyEntries] = useState<'all' | 'entered' | 'not-entered'>('all');
+  const [activeTab, setActiveTab] = useState('open');
+  const [challengeFilter, setChallengFilter] = useState<'all' | 'entered' | 'not-entered'>('all');
   
   const { data: activeContests, isLoading: isLoadingActive } = useQuery({
     queryKey: ['activeContests'],
@@ -56,18 +57,42 @@ const Dashboard = () => {
     );
   };
   
-  const filterContests = (contests: any[] | undefined) => {
-    if (!contests || filterMyEntries === 'all') return contests;
+  const hasVotedInContest = (contestId: string) => {
+    if (!user) return false;
+    // This is a placeholder - in a real app, this would check if the user has voted in the contest
+    // For now, we'll return false to show "Vote" CTA for all voting contests
+    return false;
+  };
+  
+  const filterContests = (contests: any[] | undefined, filter: 'all' | 'entered' | 'not-entered') => {
+    if (!contests || filter === 'all') return contests;
     
-    if (filterMyEntries === 'entered') {
+    if (filter === 'entered') {
       return contests.filter(contest => hasSubmittedToContest(contest.id));
     } else {
       return contests.filter(contest => !hasSubmittedToContest(contest.id));
     }
   };
   
-  const filteredActiveContests = filterContests(activeContests);
-  const filteredCompletedContests = filterContests(completedContests);
+  // Filter recent completed contests (past 7 days)
+  const getRecentWinners = () => {
+    if (!completedContests) return [];
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    return completedContests.filter(contest => 
+      contest.endDate > sevenDaysAgo
+    );
+  };
+  
+  const recentWinners = getRecentWinners();
+  
+  // Filter contests that are in voting phase
+  const votingContests = activeContests?.filter(contest => contest.status === 'voting') || [];
+  
+  // Filter contests that are open for submissions
+  const openContests = activeContests?.filter(contest => contest.status === 'active') || [];
+  const filteredOpenContests = filterContests(openContests, challengeFilter);
   
   const getSubmissionCount = (contestId: string) => {
     return photos.filter(photo => photo.contestId === contestId).length;
@@ -118,40 +143,28 @@ const Dashboard = () => {
           </Card>
         )}
         
-        <Tabs defaultValue="active" onValueChange={setActiveTab}>
+        <Tabs defaultValue="open" onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
             <TabsList className="grid w-full sm:w-auto grid-cols-3">
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="past">Past</TabsTrigger>
+              <TabsTrigger value="winners">Winners</TabsTrigger>
+              <TabsTrigger value="open">Open Challenges</TabsTrigger>
+              <TabsTrigger value="vote">Vote</TabsTrigger>
             </TabsList>
             
-            {user && (activeTab === 'active' || activeTab === 'past') && (
+            {user && activeTab === 'open' && (
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Filter size={14} />
-                  <span>Filter:</span>
-                </div>
                 <Button 
-                  variant={filterMyEntries === 'all' ? 'default' : 'outline'} 
+                  variant={challengeFilter === 'entered' ? 'default' : 'outline'} 
                   size="sm"
-                  onClick={() => setFilterMyEntries('all')}
-                  className="text-xs"
-                >
-                  All
-                </Button>
-                <Button 
-                  variant={filterMyEntries === 'entered' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setFilterMyEntries('entered')}
+                  onClick={() => setChallengFilter('entered')}
                   className="text-xs"
                 >
                   Entered
                 </Button>
                 <Button 
-                  variant={filterMyEntries === 'not-entered' ? 'default' : 'outline'} 
+                  variant={challengeFilter === 'not-entered' ? 'default' : 'outline'} 
                   size="sm"
-                  onClick={() => setFilterMyEntries('not-entered')}
+                  onClick={() => setChallengFilter('not-entered')}
                   className="text-xs"
                 >
                   Not Entered
@@ -160,17 +173,81 @@ const Dashboard = () => {
             )}
           </div>
           
-          <TabsContent value="active" className="mt-4 space-y-4">
+          <TabsContent value="winners" className="mt-4 space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">Active Competitions</h2>
+              <h2 className="text-xl font-semibold">Recent Winners</h2>
+              <p className="text-sm text-muted-foreground">Check out the results from these recently completed contests</p>
+            </div>
+            
+            {isLoadingCompleted ? (
+              <div className="py-8 text-center text-muted-foreground">Loading contests...</div>
+            ) : recentWinners.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {recentWinners.map(contest => {
+                  const userHasSubmitted = hasSubmittedToContest(contest.id);
+                  
+                  return (
+                    <Card key={contest.id} className="contest-card overflow-hidden">
+                      <div 
+                        className="h-40 bg-cover bg-center relative"
+                        style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
+                      >
+                        {userHasSubmitted && (
+                          <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
+                            <CheckCircle2 size={16} />
+                          </div>
+                        )}
+                      </div>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg">{contest.title}</CardTitle>
+                          <Badge className={getStatusColor(contest.status)}>Completed</Badge>
+                        </div>
+                        <CardDescription className="flex justify-between">
+                          <span>{contest.category.name}</span>
+                          <span className="text-sm text-muted-foreground flex items-center">
+                            <Trophy size={14} className="mr-1" />
+                            Winners announced
+                          </span>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-muted-foreground" />
+                            <span>Ended {formatDate(contest.endDate)}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="outline" asChild className="w-full">
+                          <Link to={`/contests/${contest.id}`}>
+                            See Results
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                No recent winners to display. Check back soon!
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="open" className="mt-4 space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold">Open Challenges</h2>
               <p className="text-sm text-muted-foreground">Enter these contests now and submit your best photos</p>
             </div>
             
             {isLoadingActive ? (
               <div className="py-8 text-center text-muted-foreground">Loading contests...</div>
-            ) : filteredActiveContests && filteredActiveContests.length > 0 ? (
+            ) : filteredOpenContests && filteredOpenContests.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                {filteredActiveContests.map(contest => {
+                {filteredOpenContests.map(contest => {
                   const userHasSubmitted = hasSubmittedToContest(contest.id);
                   const timeLeft = getTimeRemaining(contest.endDate);
                   const hasLessThanOneHourLeft = 
@@ -192,9 +269,7 @@ const Dashboard = () => {
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-lg">{contest.title}</CardTitle>
-                          <Badge className={getStatusColor(contest.status)}>
-                            {contest.status === 'active' ? 'Open' : 'Voting'}
-                          </Badge>
+                          <Badge className="bg-snapstar-green text-white">Open</Badge>
                         </div>
                         <CardDescription className="flex justify-between">
                           <span>{contest.category.name}</span>
@@ -227,18 +302,101 @@ const Dashboard = () => {
                             : 'bg-white text-black border border-black hover:bg-gray-100'}`}
                         >
                           <Link to={`/contests/${contest.id}`}>
-                            {contest.status === 'active' ? (
-                              userHasSubmitted ? (
-                                <>
-                                  <Eye size={16} className="mr-2" />
-                                  View Current Entries
-                                </>
-                              ) : (
-                                <>
-                                  <Camera size={16} className="mr-2" />
-                                  Submit Photo
-                                </>
-                              )
+                            {userHasSubmitted ? (
+                              <>
+                                <Eye size={16} className="mr-2" />
+                                View Your Entry
+                              </>
+                            ) : (
+                              <>
+                                <Camera size={16} className="mr-2" />
+                                Enter Competition
+                              </>
+                            )}
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                {challengeFilter !== 'all' 
+                  ? `No ${challengeFilter === 'entered' ? 'entered' : 'unentered'} challenges found.` 
+                  : 'No open challenges right now. Check back soon!'}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="vote" className="mt-4 space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold">Vote on Entries</h2>
+              <p className="text-sm text-muted-foreground">Help decide the winners by voting on these contest entries</p>
+            </div>
+            
+            {isLoadingActive ? (
+              <div className="py-8 text-center text-muted-foreground">Loading contests...</div>
+            ) : votingContests && votingContests.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {votingContests.map(contest => {
+                  const userHasSubmitted = hasSubmittedToContest(contest.id);
+                  const userHasVoted = hasVotedInContest(contest.id);
+                  const timeLeft = getTimeRemaining(contest.endDate);
+                  
+                  return (
+                    <Card key={contest.id} className="contest-card overflow-hidden">
+                      <div 
+                        className="h-40 bg-cover bg-center relative"
+                        style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
+                      >
+                        {userHasSubmitted && (
+                          <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
+                            <CheckCircle2 size={16} />
+                          </div>
+                        )}
+                        {userHasVoted && (
+                          <div className="absolute top-2 left-2 bg-snapstar-blue text-white rounded-full p-1">
+                            <CheckCircle2 size={16} />
+                          </div>
+                        )}
+                      </div>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg">{contest.title}</CardTitle>
+                          <Badge className="bg-snapstar-blue text-white">Voting</Badge>
+                        </div>
+                        <CardDescription className="flex justify-between">
+                          <span>{contest.category.name}</span>
+                          <span className="text-sm text-muted-foreground flex items-center">
+                            <Users size={14} className="mr-1" />
+                            {getSubmissionCount(contest.id)} entries
+                          </span>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Clock size={16} className="text-muted-foreground" />
+                            <span>{timeLeft}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-muted-foreground" />
+                            <span>Voting ends {formatDate(contest.endDate)}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          asChild 
+                          className="w-full bg-snapstar-purple hover:bg-snapstar-purple/90 text-white"
+                        >
+                          <Link to={`/contests/${contest.id}`}>
+                            {userHasVoted ? (
+                              <>
+                                <CheckCircle2 size={16} className="mr-2" />
+                                Voted
+                              </>
                             ) : (
                               <>
                                 <Award size={16} className="mr-2" />
@@ -254,127 +412,7 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground">
-                {filterMyEntries !== 'all' 
-                  ? `No ${filterMyEntries === 'entered' ? 'entered' : 'unentered'} contests found.` 
-                  : 'No active contests right now. Check back soon!'}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="upcoming" className="mt-4 space-y-4">
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold">Upcoming Competitions</h2>
-              <p className="text-sm text-muted-foreground">Get ready for these upcoming contests</p>
-            </div>
-            
-            {isLoadingUpcoming ? (
-              <div className="py-8 text-center text-muted-foreground">Loading contests...</div>
-            ) : upcomingContests && upcomingContests.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {upcomingContests.map(contest => (
-                  <Card key={contest.id} className="contest-card overflow-hidden">
-                    <div 
-                      className="h-40 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
-                    />
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{contest.title}</CardTitle>
-                        <Badge className={getStatusColor(contest.status)}>Upcoming</Badge>
-                      </div>
-                      <CardDescription>{contest.category.name}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-muted-foreground" />
-                          <span>Starts {formatDate(contest.startDate)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-muted-foreground" />
-                          <span>Ends {formatDate(contest.endDate)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button variant="outline" asChild className="w-full">
-                        <Link to={`/contests/${contest.id}`}>View Details</Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                No upcoming contests scheduled. Check back soon!
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="past" className="mt-4 space-y-4">
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold">Past Competitions</h2>
-              <p className="text-sm text-muted-foreground">View results from previous contests</p>
-            </div>
-            
-            {isLoadingCompleted ? (
-              <div className="py-8 text-center text-muted-foreground">Loading contests...</div>
-            ) : filteredCompletedContests && filteredCompletedContests.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {filteredCompletedContests.map(contest => {
-                  const userHasSubmitted = hasSubmittedToContest(contest.id);
-                  
-                  return (
-                    <Card key={contest.id} className="contest-card overflow-hidden">
-                      <div 
-                        className="h-40 bg-cover bg-center relative"
-                        style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
-                      >
-                        {userHasSubmitted && (
-                          <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
-                            <CheckCircle2 size={16} />
-                          </div>
-                        )}
-                      </div>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg">{contest.title}</CardTitle>
-                          <Badge className={getStatusColor(contest.status)}>Completed</Badge>
-                        </div>
-                        <CardDescription className="flex justify-between">
-                          <span>{contest.category.name}</span>
-                          <span className="text-sm text-muted-foreground flex items-center">
-                            <Users size={14} className="mr-1" />
-                            {getSubmissionCount(contest.id)} entries
-                          </span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pb-2">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Award size={16} className="text-muted-foreground" />
-                            <span>Winners announced</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar size={16} className="text-muted-foreground" />
-                            <span>Ended {formatDate(contest.endDate)}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        <Button variant="outline" asChild className="w-full">
-                          <Link to={`/contests/${contest.id}`}>View Results</Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                {filterMyEntries !== 'all' 
-                  ? `No ${filterMyEntries === 'entered' ? 'entered' : 'unentered'} past contests found.` 
-                  : 'No past contests available.'}
+                No contests are currently in the voting phase. Check back soon!
               </div>
             )}
           </TabsContent>

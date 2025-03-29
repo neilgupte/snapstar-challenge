@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Settings, Camera, Trophy, Heart, Award, User as UserIcon, Star } from 'lucide-react';
+import { LogOut, Settings, Camera, Trophy, Heart, Award, User as UserIcon, Star, Upload, Edit } from 'lucide-react';
 import { photos } from '@/services/mockData';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const Profile = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   
   // Filter mock photos for the current user
   const userPhotos = photos.filter(photo => user && photo.userId === user.id);
@@ -31,6 +37,14 @@ const Profile = () => {
     signOut();
     navigate('/');
   };
+
+  // Handle avatar update
+  const handleAvatarUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would upload the image to a server
+    toast.success("Profile picture updated successfully!");
+    setIsAvatarDialogOpen(false);
+  };
   
   if (!user) {
     // Redirect to sign in if not logged in
@@ -44,12 +58,61 @@ const Profile = () => {
         {/* Profile header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.avatarUrl} alt={user.username} />
-              <AvatarFallback className="bg-snapstar-purple text-white">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.avatarUrl} alt={user.username} />
+                <AvatarFallback className="bg-snapstar-purple text-white">
+                  {getUserInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-primary text-primary-foreground"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Update Profile Picture</DialogTitle>
+                    <DialogDescription>
+                      Upload a new profile picture
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAvatarUpdate}>
+                    <div className="grid gap-4 py-4">
+                      <div className="mx-auto">
+                        <Avatar className="h-24 w-24">
+                          <AvatarImage src={avatarUrl} alt={user.username} />
+                          <AvatarFallback className="bg-snapstar-purple text-white text-xl">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="avatar">Profile Picture URL</Label>
+                        <Input 
+                          id="avatar" 
+                          value={avatarUrl} 
+                          onChange={(e) => setAvatarUrl(e.target.value)} 
+                          placeholder="Enter image URL"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Or upload from your device (coming soon)
+                      </p>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Save Changes</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
             <div>
               <h1 className="text-2xl font-bold">{user.username}</h1>
               <p className="text-muted-foreground">{user.email}</p>
@@ -131,17 +194,25 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="flex items-center gap-2">
-                {user.isPremium ? (
-                  <>
-                    <Award className="h-5 w-5 text-snapstar-green" />
-                    <span className="text-xl font-bold">Premium</span>
-                  </>
-                ) : (
-                  <>
-                    <UserIcon className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-xl font-bold">Free</span>
-                  </>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {user.isPremium ? (
+                    <>
+                      <Award className="h-5 w-5 text-snapstar-green" />
+                      <span className="text-xl font-bold">Premium</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserIcon className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-xl font-bold">Free</span>
+                    </>
+                  )}
+                </div>
+                
+                {!user.isPremium && (
+                  <Button size="sm" variant="outline" className="text-xs text-snapstar-purple" asChild>
+                    <a href="/upgrade">Upgrade</a>
+                  </Button>
                 )}
               </div>
             </CardContent>
