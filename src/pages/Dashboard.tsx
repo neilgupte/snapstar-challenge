@@ -42,14 +42,12 @@ const Dashboard = () => {
   const submissionsRemaining = user ? (user.maxSubmissionsPerWeek - (submissionCount || 0)) : 0;
   
   useEffect(() => {
-    // Show welcome toast only once
     if (user && sessionStorage.getItem('welcomed') !== 'true') {
       toast.success(`Welcome back, ${user.username}!`);
       sessionStorage.setItem('welcomed', 'true');
     }
   }, [user]);
   
-  // Helper to check if user has submitted to a specific contest
   const hasSubmittedToContest = (contestId: string) => {
     if (!user) return false;
     return photos.some(photo => 
@@ -85,7 +83,6 @@ const Dashboard = () => {
           </p>
         </div>
         
-        {/* Submission status */}
         {user && (
           <Card>
             <CardHeader className="pb-2">
@@ -108,20 +105,19 @@ const Dashboard = () => {
                   <Badge className="bg-snapstar-purple">Premium</Badge>
                 ) : (
                   <Button variant="outline" size="sm" asChild>
-                    <Link to="/upgrade">Upgrade to Premium</Link>
+                    <Link to="/upgrade">Upgrade</Link>
                   </Button>
                 )}
               </div>
               {!user.isPremium && submissionsRemaining === 0 && (
                 <div className="mt-3 text-sm text-snapstar-red">
-                  You've used all your free submissions this week. Upgrade to Premium for unlimited entries!
+                  You've used all your free submissions this week. Upgrade for unlimited entries!
                 </div>
               )}
             </CardContent>
           </Card>
         )}
         
-        {/* Contests tabs */}
         <Tabs defaultValue="active" onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
             <TabsList className="grid w-full sm:w-auto grid-cols-3">
@@ -223,12 +219,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter className="relative">
-                        {contest.status === 'active' && (
-                          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-snapstar-green text-white text-xs px-2 py-0.5 rounded">
-                            Open for entries
-                          </div>
-                        )}
+                      <CardFooter>
                         <Button 
                           asChild 
                           className={`w-full ${userHasSubmitted 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -238,12 +239,12 @@ const PhotoSubmission = () => {
             <CardContent>
               <p className="text-sm">
                 As a free user, you can submit up to {user.maxSubmissionsPerWeek} photos per week.
-                Your limit will reset in a few days, or you can upgrade to Premium for unlimited submissions.
+                Your limit will reset in a few days, or you can upgrade for unlimited submissions.
               </p>
             </CardContent>
             <CardFooter>
               <Button className="w-full" asChild>
-                <Link to="/upgrade">Upgrade to Premium</Link>
+                <Link to="/upgrade">Upgrade</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -345,17 +346,10 @@ const PhotoSubmission = () => {
                           </div>
                         )}
                       </CardContent>
-                      <CardFooter className="relative">
-                        {!userHasSubmitted && (
-                          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-snapstar-green text-white text-xs px-2 py-0.5 rounded">
-                            Open for entries
-                          </div>
-                        )}
+                      <CardFooter>
                         <Button 
                           asChild 
-                          className={`w-full ${userHasSubmitted 
-                            ? 'bg-white text-black border border-gray-300 hover:bg-gray-100' 
-                            : 'bg-white text-black border border-black hover:bg-gray-100'}`}
+                          className="w-full bg-white text-black border border-black hover:bg-gray-100"
                         >
                           <Link to={`/contests/${contest.id}`}>
                             {userHasSubmitted ? (

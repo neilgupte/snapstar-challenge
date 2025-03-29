@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search as SearchIcon, X } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const TopNavigation = () => {
   const navigate = useNavigate();
@@ -48,9 +49,7 @@ const TopNavigation = () => {
           </form>
         ) : (
           <>
-            <Link to="/" className="text-xl font-bold">
-              SnapStar
-            </Link>
+            <Logo />
             
             <div className="flex items-center gap-2">
               <Button 
