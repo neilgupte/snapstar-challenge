@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search as SearchIcon, X, User, Bell, Camera } from 'lucide-react';
+import { Search as SearchIcon, X } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 const TopNavigation = () => {
@@ -52,16 +52,6 @@ const TopNavigation = () => {
             <Logo />
             
             <div className="flex items-center gap-2">
-              {user && !user.isPremium && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  asChild
-                  className="mr-2 text-snapstar-purple border-snapstar-purple hover:bg-snapstar-purple hover:text-white"
-                >
-                  <Link to="/upgrade">Upgrade</Link>
-                </Button>
-              )}
               <Button 
                 variant="ghost" 
                 size="icon" 

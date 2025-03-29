@@ -2,6 +2,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Contest } from '@/types';
+import { DialogTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ContestListProps {
   contests: Contest[];
@@ -64,6 +67,42 @@ const ContestList: React.FC<ContestListProps> = ({ contests }) => {
                       <Button size="sm" variant="outline" className="h-8">
                         View
                       </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="h-8">
+                            Settings
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Contest Settings</DialogTitle>
+                            <DialogDescription>
+                              Configure the parameters for this contest
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="submissionDays">Submission Period (days)</Label>
+                              <Input id="submissionDays" type="number" defaultValue="7" />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="votingDays">Voting Period (days)</Label>
+                              <Input id="votingDays" type="number" defaultValue="3" />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="featured">Featured Contest</Label>
+                              <div className="flex items-center space-x-2">
+                                <input type="checkbox" id="featured" />
+                                <label htmlFor="featured" className="text-sm">Show on homepage</label>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline">Cancel</Button>
+                            <Button>Save Changes</Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </td>
                 </tr>

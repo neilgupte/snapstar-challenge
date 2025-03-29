@@ -60,7 +60,6 @@ const Dashboard = () => {
   const hasVotedInContest = (contestId: string) => {
     if (!user) return false;
     // This is a placeholder - in a real app, this would check if the user has voted in the contest
-    // For now, we'll return false to show "Vote" CTA for all voting contests
     return false;
   };
   
@@ -96,6 +95,12 @@ const Dashboard = () => {
   
   const getSubmissionCount = (contestId: string) => {
     return photos.filter(photo => photo.contestId === contestId).length;
+  };
+
+  // Placeholder function to get a winner's name
+  const getWinnerName = (contestId: string) => {
+    // In a real app, this would fetch the actual winner
+    return "Jane Doe";
   };
   
   return (
@@ -185,6 +190,7 @@ const Dashboard = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 {recentWinners.map(contest => {
                   const userHasSubmitted = hasSubmittedToContest(contest.id);
+                  const winnerName = getWinnerName(contest.id);
                   
                   return (
                     <Card key={contest.id} className="contest-card overflow-hidden">
@@ -207,7 +213,7 @@ const Dashboard = () => {
                           <span>{contest.category.name}</span>
                           <span className="text-sm text-muted-foreground flex items-center">
                             <Trophy size={14} className="mr-1" />
-                            Winners announced
+                            Winner: {winnerName}
                           </span>
                         </CardDescription>
                       </CardHeader>
@@ -301,7 +307,7 @@ const Dashboard = () => {
                             ? 'bg-white text-black border border-gray-300 hover:bg-gray-100' 
                             : 'bg-white text-black border border-black hover:bg-gray-100'}`}
                         >
-                          <Link to={`/contests/${contest.id}`}>
+                          <Link to={`/contests/${contest.id}`} className="py-2 flex items-center justify-center w-full">
                             {userHasSubmitted ? (
                               <>
                                 <Eye size={16} className="mr-2" />
@@ -391,7 +397,7 @@ const Dashboard = () => {
                           asChild 
                           className="w-full bg-snapstar-purple hover:bg-snapstar-purple/90 text-white"
                         >
-                          <Link to={`/contests/${contest.id}`}>
+                          <Link to={`/contests/${contest.id}`} className="py-2 flex items-center justify-center w-full">
                             {userHasVoted ? (
                               <>
                                 <CheckCircle2 size={16} className="mr-2" />

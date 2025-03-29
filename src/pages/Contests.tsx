@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   getActiveContests, 
@@ -13,8 +13,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { CalendarClock, Clock, Trophy, Users } from 'lucide-react';
 import { photos } from '@/services/mockData';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ContestsPage = () => {
+  const { user } = useAuth();
+  const [filter, setFilter] = useState<'all' | 'entered'>('all');
+  
   const { 
     data: activeContests, 
     isLoading: isLoadingActive 
@@ -43,6 +48,19 @@ const ContestsPage = () => {
     return photos.filter(photo => photo.contestId === contestId).length;
   };
 
+  const hasSubmittedToContest = (contestId: string) => {
+    if (!user) return false;
+    return photos.some(photo => 
+      photo.contestId === contestId && 
+      photo.userId === user.id
+    );
+  };
+
+  const filterContests = (contests) => {
+    if (!contests || filter === 'all' || !user) return contests;
+    return contests.filter(contest => hasSubmittedToContest(contest.id));
+  };
+
   const renderContestCards = (contests, isLoading) => {
     if (isLoading) {
       return Array(3).fill(0).map((_, i) => (
@@ -69,7 +87,9 @@ const ContestsPage = () => {
       );
     }
 
-    return contests.map((contest) => {
+    const filteredContests = filterContests(contests);
+
+    return filteredContests.map((contest) => {
       let statusBadge;
       
       if (contest.status === 'active') {
@@ -136,16 +156,44 @@ const ContestsPage = () => {
     <div className="container max-w-4xl mx-auto py-6 px-4">
       <h1 className="text-3xl font-bold mb-6">Photography Contests</h1>
       
+      <div className="flex justify-end mb-4">
+        {user && (
+          <div className="flex gap-2">
+            <Button 
+              variant={filter === 'all' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setFilter('all')}
+            >
+              All Contests
+            </Button>
+            <Button 
+              variant={filter === 'entered' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setFilter('entered')}
+            >
+              Contests I've Entered
+            </Button>
+          </div>
+        )}
+      </div>
+      
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
           <TabsTrigger value="active">Open Challenges</TabsTrigger>
+          <TabsTrigger value="voting">Vote</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="completed">Winners</TabsTrigger>
+          <TabsTrigger value="completed">Past</TabsTrigger>
         </TabsList>
         
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4">
-            {renderContestCards(activeContests, isLoadingActive)}
+            {renderContestCards(activeContests?.filter(c => c.status === 'active'), isLoadingActive)}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="voting" className="space-y-4">
+          <div className="grid gap-4">
+            {renderContestCards(activeContests?.filter(c => c.status === 'voting'), isLoadingActive)}
           </div>
         </TabsContent>
         

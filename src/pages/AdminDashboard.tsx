@@ -6,6 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { photos, contests } from '@/services/mockData';
 import StatsCard from '@/components/admin/StatsCard';
 import AdminTabs from '@/components/admin/AdminTabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DialogTrigger } from '@radix-ui/react-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -50,9 +54,45 @@ const AdminDashboard = () => {
             Manage contests, moderate content, and monitor platform activity
           </p>
         </div>
-        <Button asChild>
-          <a href="/admin/contests/new">Create New Contest</a>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <a href="/admin/contests/new">Create New Contest</a>
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Premium Settings</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Premium Settings</DialogTitle>
+                <DialogDescription>
+                  Configure premium pricing and access
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="monthlyPrice">Monthly Price ($)</Label>
+                  <Input id="monthlyPrice" type="number" defaultValue="9.99" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="yearlyPrice">Yearly Price ($)</Label>
+                  <Input id="yearlyPrice" type="number" defaultValue="99.99" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="grantAccess">Grant Premium Access</Label>
+                  <div className="flex items-center gap-2">
+                    <Input id="userEmail" placeholder="Enter user email" />
+                    <Button>Grant</Button>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline">Cancel</Button>
+                <Button>Save Changes</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       <div className="grid gap-4 md:grid-cols-3">
