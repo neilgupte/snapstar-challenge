@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,9 +8,10 @@ import { getActiveContests, getUserSubmissionCount } from '@/services/contestSer
 import { Upload, Image, Camera, AlertTriangle, Lock, X, Eye, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { photos } from '@/services/mockData'; // Import photos from mockData
+import { photos } from '@/services/mockData';
 import SubmissionGuidelines from '@/components/SubmissionGuidelines';
 import CountdownTimer from '@/components/CountdownTimer';
+import { Filter } from 'lucide-react';
 
 const PhotoSubmission = () => {
   const { user } = useAuth();
@@ -37,7 +37,6 @@ const PhotoSubmission = () => {
   const canSubmit = user && (user.isPremium || submissionsRemaining > 0);
   
   useEffect(() => {
-    // Redirect to login if not authenticated
     if (!user) {
       navigate('/signin');
     }
@@ -82,8 +81,6 @@ const PhotoSubmission = () => {
       
       const photoDataUrl = canvas.toDataURL('image/jpeg');
       
-      // Here you would typically set this data URL to your state or pass it to the contest detail page
-      // For demo purposes, we'll just show a success toast
       toast.success('Photo captured! Ready to submit to a contest');
       stopCamera();
       setCameraOpen(false);
@@ -92,7 +89,6 @@ const PhotoSubmission = () => {
 
   useEffect(() => {
     return () => {
-      // Clean up camera when component unmounts
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -100,10 +96,9 @@ const PhotoSubmission = () => {
   }, [stream]);
 
   if (!user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
   
-  // Helper to check if user has submitted to a specific contest
   const hasSubmittedToContest = (contestId: string) => {
     return photos.some(photo => 
       photo.contestId === contestId && 
@@ -111,7 +106,6 @@ const PhotoSubmission = () => {
     );
   };
   
-  // Filter contests based on user's participation
   const filterContests = (contests: any[] | undefined) => {
     if (!contests || filterMyEntries === 'all') return contests;
     
@@ -137,7 +131,6 @@ const PhotoSubmission = () => {
           </div>
         </div>
         
-        {/* Submission status */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Your Submission Status</CardTitle>
@@ -169,7 +162,6 @@ const PhotoSubmission = () => {
           </CardContent>
         </Card>
         
-        {/* Camera Dialog */}
         <Dialog open={cameraOpen} onOpenChange={setCameraOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -446,7 +438,6 @@ const PhotoSubmission = () => {
   );
 };
 
-// Link component 
 interface LinkProps {
   to: string;
   children: React.ReactNode;

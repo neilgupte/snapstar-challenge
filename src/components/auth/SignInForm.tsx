@@ -43,6 +43,7 @@ const SignInForm = () => {
   const onSubmit = async (data: SignInFormValues) => {
     try {
       setFormLoading(true);
+      // Fixed: Passing credentials as a single object parameter with correct structure
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,

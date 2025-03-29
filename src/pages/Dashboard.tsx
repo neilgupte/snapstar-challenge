@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUpcomingContests, getCompletedContests, getUserSubmissionCount } from '@/services/contestService';
-import { Clock, Calendar, Camera, Award, Users, Filter, CheckCircle2 } from 'lucide-react';
+import { Clock, Calendar, Camera, Award, Users, Filter, CheckCircle2, Eye } from 'lucide-react';
 import { photos } from '@/services/mockData';
 import CountdownTimer from '@/components/CountdownTimer';
 import { formatDate, getTimeRemaining, getStatusColor } from '@/utils/formatUtils';
