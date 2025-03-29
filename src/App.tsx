@@ -23,6 +23,7 @@ import Search from "./pages/Search";
 import Rankings from "./pages/Rankings";
 import Notifications from "./pages/Notifications";
 import Rules from "./pages/Rules";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/contests" element={<Contests />} />
                 <Route path="/contests/:id" element={<ContestDetail />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<UserProfile />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/terms" element={<TermsAndConditions />} />

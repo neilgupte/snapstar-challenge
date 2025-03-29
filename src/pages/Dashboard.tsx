@@ -103,6 +103,12 @@ const Dashboard = () => {
     return "Jane Doe";
   };
   
+  // Function to get a winner's ID
+  const getWinnerId = (contestId: string) => {
+    // In a real app, this would fetch the actual winner's ID
+    return "user-123";
+  };
+  
   return (
     <div className="container max-w-4xl py-6">
       <div className="flex flex-col gap-6">
@@ -188,6 +194,7 @@ const Dashboard = () => {
                 {recentWinners.map(contest => {
                   const userHasSubmitted = hasSubmittedToContest(contest.id);
                   const winnerName = getWinnerName(contest.id);
+                  const winnerId = getWinnerId(contest.id);
                   
                   return (
                     <Card key={contest.id} className="contest-card overflow-hidden">
@@ -210,7 +217,12 @@ const Dashboard = () => {
                           <span>{contest.category.name}</span>
                           <span className="text-sm text-muted-foreground flex items-center">
                             <Trophy size={14} className="mr-1" />
-                            {winnerName}
+                            <Link 
+                              to={`/profile/${winnerId}`} 
+                              className="hover:underline hover:text-snapstar-purple"
+                            >
+                              {winnerName}
+                            </Link>
                           </span>
                         </CardDescription>
                       </CardHeader>
