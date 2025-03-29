@@ -78,7 +78,7 @@ const Dashboard = () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Return at most 6 winners
+    // Return exactly 6 winners
     return completedContests.filter(contest => 
       contest.endDate > sevenDaysAgo
     ).slice(0, 6);
