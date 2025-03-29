@@ -79,6 +79,10 @@
 }
 
 @layer components {
+  .app-background {
+    @apply bg-gradient-to-br from-white via-[#f8f5ff] to-[#eee8ff];
+  }
+
   .star-rating {
     @apply flex space-x-1;
   }

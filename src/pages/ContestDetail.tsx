@@ -8,12 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, Upload, Star, AlertTriangle, Flag, User, Trophy } from 'lucide-react';
+import { Calendar, Clock, Upload, Star, AlertTriangle, Flag, User, Trophy, Camera } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/contexts/AuthContext';
 import { getContestById, getPhotosByContestId, submitPhoto, hasUserSubmittedToContest, getUserVote, voteOnPhoto } from '@/services/contestService';
 import { Label } from '@/components/ui/label';
-import { Camera, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +28,8 @@ const ContestDetail = () => {
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
+  const [signInDialogOpen, setSignInDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   const { data: contest, isLoading: isLoadingContest } = useQuery({
     queryKey: ['contest', id],
@@ -51,8 +55,6 @@ const ContestDetail = () => {
         throw new Error('Missing required data');
       }
       
-      // In a real app, we would upload the file to a storage service here
-      // and then get the URL. For now, we'll just use the preview URL.
       return submitPhoto(id, user.id, user.username, photoPreview, caption);
     },
     onSuccess: () => {
@@ -62,7 +64,6 @@ const ContestDetail = () => {
       setCaption('');
       setSubmitDialogOpen(false);
       
-      // Refetch data
       queryClient.invalidateQueries({ queryKey: ['contestPhotos', id] });
       queryClient.invalidateQueries({ queryKey: ['hasSubmitted', id, user?.id] });
       queryClient.invalidateQueries({ queryKey: ['submissionCount', user?.id] });
@@ -83,11 +84,9 @@ const ContestDetail = () => {
     onSuccess: (_, variables) => {
       toast.success('Vote submitted!');
       
-      // Reset UI state
       setSelectedPhoto(null);
       setSelectedRating(0);
       
-      // Refetch data
       queryClient.invalidateQueries({ queryKey: ['contestPhotos', id] });
       queryClient.invalidateQueries({ queryKey: ['userVote', variables.photoId, user?.id] });
     },
@@ -100,20 +99,18 @@ const ContestDetail = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Basic validation
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
     
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
       toast.error('Image size should be less than 10MB');
       return;
     }
     
     setPhotoFile(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPhotoPreview(e.target?.result as string);
@@ -132,12 +129,19 @@ const ContestDetail = () => {
   
   const handleVote = (photoId: string, rating: number) => {
     if (!user) {
-      toast.error('Please sign in to vote');
-      navigate('/signin');
+      setSignInDialogOpen(true);
       return;
     }
     
     voteMutation.mutate({ photoId, rating });
+  };
+
+  const handleSignInClick = () => {
+    navigate('/signin');
+  };
+
+  const handleSignUpClick = () => {
+    navigate('/signup');
   };
   
   const renderStarRating = (photoId: string) => {
@@ -369,118 +373,142 @@ const ContestDetail = () => {
             </div>
           </div>
           
-          <div className="grid gap-6 sm:grid-cols-2">
-            {photos.map((photo) => (
-              <Card key={photo.id} className="overflow-hidden">
-                <AspectRatio ratio={4 / 3}>
-                  <img
-                    src={photo.imageUrl}
-                    alt={photo.caption || 'Contest entry'}
-                    className="h-full w-full object-cover transition-all hover:scale-105"
-                  />
-                </AspectRatio>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {photo.caption || 'Untitled'}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-1">
-                        <User size={14} />
-                        {photo.username}
-                      </CardDescription>
-                    </div>
+          <Carousel className="w-full">
+            <CarouselContent>
+              {photos.map((photo) => (
+                <CarouselItem key={photo.id}>
+                  <Card className="mx-1 overflow-hidden">
+                    <AspectRatio ratio={4 / 3}>
+                      <img
+                        src={photo.imageUrl}
+                        alt={photo.caption || 'Contest entry'}
+                        className="h-full w-full object-cover"
+                      />
+                    </AspectRatio>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between">
+                        <div>
+                          <CardTitle className="text-lg">
+                            {photo.caption || 'Untitled'}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-1">
+                            <User size={14} />
+                            {photo.username}
+                          </CardDescription>
+                        </div>
+                        
+                        {isCompleted && photo.averageRating >= 4.5 && (
+                          <Badge className="bg-snapstar-orange font-bold">
+                            <Trophy size={14} className="mr-1" /> Winner
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
                     
-                    {isCompleted && photo.averageRating >= 4.5 && (
-                      <Badge className="bg-snapstar-orange font-bold">
-                        <Trophy size={14} className="mr-1" /> Winner
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                
-                <CardFooter className="flex justify-between pt-0">
-                  {isCompleted ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex text-snapstar-orange">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            size={16}
-                            fill={i < Math.round(photo.averageRating) ? 'currentColor' : 'none'}
-                            className={i < Math.round(photo.averageRating) ? 'text-snapstar-orange' : 'text-gray-300'}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm font-medium">
-                        {photo.averageRating.toFixed(1)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({photo.voteCount} votes)
-                      </span>
-                    </div>
-                  ) : isVoting && user && photo.userId !== user.id ? (
-                    <div className="flex flex-col items-start gap-1">
-                      <div
-                        className="star-rating"
-                        onMouseLeave={() => {
-                          if (selectedPhoto === photo.id) {
-                            setSelectedPhoto(null);
-                            setSelectedRating(0);
-                          }
-                        }}
-                      >
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <button
-                            key={rating}
-                            className={`star-rating-item ${
-                              selectedPhoto === photo.id && rating <= selectedRating
-                                ? 'active animate-pulse-star'
-                                : ''
-                            }`}
-                            onClick={() => handleVote(photo.id, rating)}
-                            onMouseEnter={() => {
-                              setSelectedPhoto(photo.id);
-                              setSelectedRating(rating);
-                            }}
-                            disabled={voteMutation.isPending}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        Rate this photo
-                      </span>
-                    </div>
-                  ) : (
-                    <div>
-                      {photo.userId === user?.id ? (
-                        <Badge variant="outline">Your Entry</Badge>
+                    <CardFooter className="flex justify-between pt-0">
+                      {isCompleted ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex text-snapstar-orange">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                size={16}
+                                fill={i < Math.round(photo.averageRating) ? 'currentColor' : 'none'}
+                                className={i < Math.round(photo.averageRating) ? 'text-snapstar-orange' : 'text-gray-300'}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm font-medium">
+                            {photo.averageRating.toFixed(1)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({photo.voteCount} votes)
+                          </span>
+                        </div>
+                      ) : isVoting ? (
+                        user && photo.userId !== user.id ? (
+                          <div className="flex flex-col items-start gap-1">
+                            <div
+                              className="star-rating"
+                              onMouseLeave={() => {
+                                if (selectedPhoto === photo.id) {
+                                  setSelectedPhoto(null);
+                                  setSelectedRating(0);
+                                }
+                              }}
+                            >
+                              {[1, 2, 3, 4, 5].map((rating) => (
+                                <button
+                                  key={rating}
+                                  className={`star-rating-item ${
+                                    selectedPhoto === photo.id && rating <= selectedRating
+                                      ? 'active animate-pulse-star'
+                                      : ''
+                                  }`}
+                                  onClick={() => handleVote(photo.id, rating)}
+                                  onMouseEnter={() => {
+                                    setSelectedPhoto(photo.id);
+                                    setSelectedRating(rating);
+                                  }}
+                                  disabled={voteMutation.isPending}
+                                >
+                                  ★
+                                </button>
+                              ))}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              Rate this photo
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            {photo.userId === user?.id ? (
+                              <Badge variant="outline">Your Entry</Badge>
+                            ) : (
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                onClick={() => setSignInDialogOpen(true)}
+                              >
+                                Sign in to vote
+                              </Button>
+                            )}
+                          </div>
+                        )
                       ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {isVoting
-                            ? 'Sign in to vote'
-                            : isActive
-                            ? 'Voting starts after submission period'
-                            : ''}
-                        </span>
+                        <div>
+                          {photo.userId === user?.id ? (
+                            <Badge variant="outline">Your Entry</Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {isActive
+                                ? 'Voting starts after submission period'
+                                : ''}
+                            </span>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    title="Report Photo"
-                  >
-                    <Flag size={16} />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        title="Report Photo"
+                      >
+                        <Flag size={16} />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {!isMobile && (
+              <>
+                <CarouselPrevious className="left-0" />
+                <CarouselNext className="right-0" />
+              </>
+            )}
+          </Carousel>
         </div>
       ) : (
         <div className="rounded-lg border py-12 text-center">
@@ -552,6 +580,23 @@ const ContestDetail = () => {
           </div>
         </div>
       )}
+
+      <Dialog open={signInDialogOpen} onOpenChange={setSignInDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign in required</DialogTitle>
+            <DialogDescription>
+              You need to sign in to vote on photos. It only takes a minute!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col space-y-4 py-4">
+            <Button onClick={handleSignInClick}>Sign In</Button>
+            <Button variant="outline" onClick={handleSignUpClick}>
+              Create Account
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

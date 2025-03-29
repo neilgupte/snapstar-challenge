@@ -31,28 +31,30 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/submit" element={<PhotoSubmission />} />
-              <Route path="/contests" element={<Contests />} />
-              <Route path="/contests/:id" element={<ContestDetail />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/terms" element={<TermsAndConditions />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/upgrade" element={<Upgrade />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/rankings" element={<Rankings />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
+        <div className="app-background min-h-screen">
+          <BrowserRouter>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/submit" element={<PhotoSubmission />} />
+                <Route path="/contests" element={<Contests />} />
+                <Route path="/contests/:id" element={<ContestDetail />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/terms" element={<TermsAndConditions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/upgrade" element={<Upgrade />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/rankings" element={<Rankings />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </div>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
