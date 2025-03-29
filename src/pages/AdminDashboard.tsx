@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,13 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { photos, contests } from '@/services/mockData';
-import { Flag, Check, X, Alert, ShieldAlert } from 'lucide-react';
+import { Flag, Check, X, AlertCircle, ShieldAlert } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Redirect if not admin
   React.useEffect(() => {
     if (!user || !user.isAdmin) {
       navigate('/');
@@ -23,7 +21,6 @@ const AdminDashboard = () => {
     return null;
   }
   
-  // Mock content moderation data
   const reportedPhotos = photos.slice(0, 2).map(photo => ({
     ...photo,
     reportReason: 'Possible copyright violation',
@@ -31,7 +28,6 @@ const AdminDashboard = () => {
     reportedAt: new Date()
   }));
   
-  // Mock contest stats
   const contestStats = {
     total: contests.length,
     active: contests.filter(c => c.status === 'active').length,
@@ -39,7 +35,6 @@ const AdminDashboard = () => {
     completed: contests.filter(c => c.status === 'completed').length,
   };
   
-  // Mock user stats
   const userStats = {
     total: 125,
     premium: 28,
@@ -60,7 +55,6 @@ const AdminDashboard = () => {
         </Button>
       </div>
       
-      {/* Stats cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
@@ -159,7 +153,6 @@ const AdminDashboard = () => {
         </Card>
       </div>
       
-      {/* Moderation section */}
       <div className="mt-8">
         <Tabs defaultValue="reported">
           <TabsList>
@@ -168,7 +161,7 @@ const AdminDashboard = () => {
               Reported Content
             </TabsTrigger>
             <TabsTrigger value="pending">
-              <Alert className="mr-1 h-4 w-4" />
+              <AlertCircle className="mr-1 h-4 w-4" />
               Pending Review
             </TabsTrigger>
             <TabsTrigger value="contests">Contests</TabsTrigger>
