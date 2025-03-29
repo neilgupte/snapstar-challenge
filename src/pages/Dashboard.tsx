@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUpcomingContests, getCompletedContests, getUserSubmissionCount } from '@/services/contestService';
-import { Clock, Calendar, Camera, Award, ArrowRight } from 'lucide-react';
+import { Clock, Calendar, Camera, Award } from 'lucide-react';
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -191,14 +191,6 @@ const Dashboard = () => {
                 No active contests right now. Check back soon!
               </div>
             )}
-            
-            <div className="flex justify-center pt-4">
-              <Button variant="outline" asChild>
-                <Link to="/contests">
-                  See All Contests <ArrowRight size={16} className="ml-2" />
-                </Link>
-              </Button>
-            </div>
           </TabsContent>
           
           <TabsContent value="upcoming" className="mt-4 space-y-4">

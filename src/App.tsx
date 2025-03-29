@@ -22,6 +22,7 @@ import Contests from "./pages/Contests";
 import Search from "./pages/Search";
 import Rankings from "./pages/Rankings";
 import Notifications from "./pages/Notifications";
+import Rules from "./pages/Rules";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="/search" element={<Search />} />
                 <Route path="/rankings" element={<Rankings />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/rules" element={<Rules />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
