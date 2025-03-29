@@ -43,7 +43,7 @@ const SignUpForm = () => {
       email: '',
       password: '',
       dateOfBirth: undefined,
-      acceptTerms: false,
+      acceptTerms: undefined, // Remove the default false value to fix the type error
     },
   });
 
