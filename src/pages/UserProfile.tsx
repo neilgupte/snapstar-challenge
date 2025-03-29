@@ -1,18 +1,17 @@
-
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { photos } from '@/services/mockData';
-import { Trophy, Award, Medal } from 'lucide-react';
+import { Trophy, Award } from 'lucide-react';
 import { mockRankings } from '@/pages/Rankings';
+import { UserProfileData } from '@/types/userProfile';
+import { Photo } from '@/types';
 
-// Mock function to simulate fetching user data
-const fetchUserProfile = async (userId) => {
-  // In a real app, this would be an API call
+const fetchUserProfile = async (userId: string): Promise<UserProfileData> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const userRanking = mockRankings.find(u => u.id === userId) || {
@@ -36,28 +35,27 @@ const fetchUserProfile = async (userId) => {
 const UserProfile = () => {
   const { userId } = useParams();
   
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery<UserProfileData>({
     queryKey: ['userProfile', userId],
-    queryFn: () => fetchUserProfile(userId),
+    queryFn: () => fetchUserProfile(userId!),
+    enabled: !!userId,
   });
   
-  const { data: userPhotos, isLoading: isLoadingPhotos } = useQuery({
+  const { data: userPhotos, isLoading: isLoadingPhotos } = useQuery<Photo[]>({
     queryKey: ['userPhotos', userId],
     queryFn: () => {
-      // In a real app, this would be an API call
       return Promise.resolve(photos.filter(p => p.userId === userId));
     }
   });
   
   const userRank = React.useMemo(() => {
-    if (!user) return null;
-    if (user.contestsEntered < 10) return null;
+    if (!user?.contestsEntered || user.contestsEntered < 10) return null;
     
     const allRankings = [...mockRankings].sort((a, b) => b.points - a.points);
     const rank = allRankings.findIndex(r => r.id === userId) + 1;
     return rank;
   }, [user, userId]);
-  
+
   if (isLoading) {
     return (
       <div className="container max-w-4xl mx-auto py-6 px-4">
@@ -96,13 +94,13 @@ const UserProfile = () => {
     <div className="container max-w-4xl mx-auto py-6 px-4">
       <div className="flex flex-col md:flex-row items-start gap-6 mb-8">
         <Avatar className="size-24 border-2 border-snapstar-purple">
-          <AvatarImage src={user.avatarUrl || '/placeholder.svg'} alt={user.username} />
-          <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarImage src={user?.avatarUrl || '/placeholder.svg'} alt={user?.username} />
+          <AvatarFallback>{user?.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
         
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{user.username}</h1>
+            <h1 className="text-3xl font-bold">{user?.username}</h1>
             {userRank && (
               <Badge variant="outline" className="text-snapstar-purple border-snapstar-purple">
                 Rank #{userRank}
@@ -110,21 +108,21 @@ const UserProfile = () => {
             )}
           </div>
           
-          <p className="text-muted-foreground mt-1 mb-3">{user.bio || 'No bio available'}</p>
+          <p className="text-muted-foreground mt-1 mb-3">{user?.bio || 'No bio available'}</p>
           
           <div className="flex flex-wrap gap-6 mt-4">
             <div className="flex items-center">
               <Trophy size={18} className="mr-2 text-yellow-500" />
-              <span className="font-medium">{user.wins} {user.wins === 1 ? 'win' : 'wins'}</span>
+              <span className="font-medium">{user?.wins} {user?.wins === 1 ? 'win' : 'wins'}</span>
             </div>
             <div>
-              <span className="font-medium">{user.contestsEntered} contests entered</span>
+              <span className="font-medium">{user?.contestsEntered} contests entered</span>
             </div>
             <div className="flex items-center">
               <Award size={18} className="mr-2 text-snapstar-purple" />
-              <span className="font-medium">{user.points} points</span>
+              <span className="font-medium">{user?.points} points</span>
             </div>
-            {user.highlightedAchievement && (
+            {user?.highlightedAchievement && (
               <Badge variant="outline" className="ml-auto">
                 {user.highlightedAchievement}
               </Badge>
