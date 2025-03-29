@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { getActiveContests, getUserSubmissionCount } from '@/services/contestService';
-import { Upload, Image, Camera, AlertTriangle, Lock, X } from 'lucide-react';
+import { Upload, Image, Camera, AlertTriangle, Lock, X, Eye, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { photos } from '@/services/mockData'; // Import photos from mockData
@@ -99,6 +99,14 @@ const PhotoSubmission = () => {
   if (!user) {
     return null; // Will redirect in useEffect
   }
+  
+  // Helper to check if user has submitted to a specific contest
+  const hasSubmittedToContest = (contestId: string) => {
+    return photos.some(photo => 
+      photo.contestId === contestId && 
+      photo.userId === user?.id
+    );
+  };
 
   return (
     <div className="container max-w-4xl py-6">
@@ -234,7 +242,8 @@ const PhotoSubmission = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
               <Button 
                 onClick={() => setCameraOpen(true)} 
-                className="w-full sm:w-auto flex items-center gap-2"
+                variant="outline"
+                className="w-full sm:w-auto flex items-center gap-2 bg-white text-black border-gray-300"
               >
                 <Camera size={18} />
                 Take a Photo
@@ -242,7 +251,7 @@ const PhotoSubmission = () => {
               <span className="text-muted-foreground hidden sm:inline">or</span>
               <Button 
                 variant="outline" 
-                className="w-full sm:w-auto flex items-center gap-2"
+                className="w-full sm:w-auto flex items-center gap-2 bg-white text-black border-gray-300"
                 asChild
               >
                 <label>
@@ -253,34 +262,57 @@ const PhotoSubmission = () => {
               </Button>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {activeContests.map((contest) => (
-                <Card key={contest.id} className="contest-card overflow-hidden">
-                  <div 
-                    className="h-40 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
-                  />
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{contest.title}</CardTitle>
-                    <CardDescription className="flex justify-between">
-                      <span>{contest.category.name}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {photos.filter(p => p.contestId === contest.id).length} submissions
-                      </span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-sm line-clamp-2">{contest.description}</p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button asChild className="w-full">
-                      <Link to={`/contests/${contest.id}`}>
-                        <Upload size={16} className="mr-2" />
-                        Submit Photo
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+              {activeContests.map((contest) => {
+                const userHasSubmitted = hasSubmittedToContest(contest.id);
+                const submissionCount = photos.filter(p => p.contestId === contest.id).length;
+                
+                return (
+                  <Card key={contest.id} className="contest-card overflow-hidden">
+                    <div 
+                      className="h-40 bg-cover bg-center relative"
+                      style={{ backgroundImage: `url(${contest.coverImageUrl})` }}
+                    >
+                      {userHasSubmitted && (
+                        <div className="absolute top-2 right-2 bg-snapstar-green text-white rounded-full p-1">
+                          <Check size={16} />
+                        </div>
+                      )}
+                    </div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">{contest.title}</CardTitle>
+                      <CardDescription className="flex justify-between">
+                        <span>{contest.category.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {submissionCount} submission{submissionCount !== 1 ? 's' : ''}
+                        </span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <p className="text-sm line-clamp-2">{contest.description}</p>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        asChild 
+                        className={`w-full ${userHasSubmitted ? 'bg-white text-black border border-gray-300 hover:bg-gray-100' : 'bg-white text-black border border-gray-300 hover:bg-gray-100'}`}
+                      >
+                        <Link to={`/contests/${contest.id}`}>
+                          {userHasSubmitted ? (
+                            <>
+                              <Eye size={16} className="mr-2" />
+                              View Current Entries
+                            </>
+                          ) : (
+                            <>
+                              <Camera size={16} className="mr-2" />
+                              Submit Photo
+                            </>
+                          )}
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         ) : (
