@@ -921,4 +921,33 @@ const ContestDetail = () => {
           <DialogHeader>
             <DialogTitle>Sign in required</DialogTitle>
             <DialogDescription>
-              You need to sign in to vote on photos. It only takes
+              You need to sign in to vote on photos. It only takes a few moments.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 py-4">
+            <p className="text-center text-sm text-muted-foreground">
+              Join our community to participate in contests, vote for photos, and showcase your photography skills.
+            </p>
+          </div>
+          
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setSignInDialogOpen(false)}>
+              Maybe Later
+            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSignInClick}>
+                Sign In
+              </Button>
+              <Button variant="outline" onClick={handleSignUpClick}>
+                Create Account
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ContestDetail;
