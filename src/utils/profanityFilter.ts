@@ -35,6 +35,9 @@ export const isProfanity = (text: string, strict: boolean = false): boolean => {
   return false;
 };
 
+// Add this function to maintain compatibility with existing imports
+export const containsProfanity = isProfanity;
+
 // The profanity filter implementation is simplified.
 // For production, consider using a more comprehensive library
 // or implementing a more sophisticated algorithm.
